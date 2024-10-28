@@ -3,11 +3,7 @@ import traverse from '@babel/traverse';
 import generate from '@babel/generator';
 import t from '@babel/types';
 import fs from 'fs';
-import {readFile, writeFile} from 'fs/promises';
-
-// const componentPath = './TestComponent.js';
-const componentPath = '/Users/junyoungkim/Projects/ui/invoice/src/components/Pages/SendInBulk/ExcelSend/EBill/EBillDetail/EBillExcelDetailContainer.js';
-const data = fs.readFileSync(componentPath, 'utf8');
+import {readFile} from 'fs/promises';
 
 //다국어 메시지 관리 파일 정보 추출
 const extractLang = async (filePath) => {
@@ -75,10 +71,29 @@ const convertJSXToString = (jsxElement) => {
 
 const translations = await extractLang('./language/common/ko.js');
 
+const isKorean = (text) => {
+    const koreanRegex = /[가-힣]/;
+    return koreanRegex.test(text);
+};
+
 //다국어 메시지 관리 파일 기반 컴포넌트에 다국어 적용
 function adjustLangToComp(componentPath, translations) {
 
+    //file인지 dir인지 구분
+    // const status = fs.statSync(componentPath);
+    // if(status.isDirectory()) {
+    //     const files = fs.readdirSync(componentPath);
+    //     files.forEach(file => {
+    //        const filePath = pathUtil.join(componentPath, file);
+    //         adjustLangToComp(filePath, translations);
+    //     });
+    //     return;
+    // }
+
+    const data = fs.readFileSync(componentPath, 'utf8');
+
     let hasFormattedMessageImport = false;
+    let isFormattedMessageImportNeed = false;
     const ast = parser.parse(data.toString(), {
         sourceType: 'module',
         plugins   : ['jsx']
@@ -86,9 +101,9 @@ function adjustLangToComp(componentPath, translations) {
 
     traverse.default(ast, {
         ImportDeclaration(path) {
-            if(path.node.source.value === 'react-intl') {
+            if (path.node.source.value === 'react-intl') {
                 path.node.specifiers.forEach(specifier => {
-                    if(specifier.local.name === 'FormattedMessage') {
+                    if (specifier.local.name === 'FormattedMessage') {
                         hasFormattedMessageImport = true;
                     } else {
                         path.node.specifiers.push(t.importSpecifier(
@@ -99,6 +114,50 @@ function adjustLangToComp(componentPath, translations) {
                 });
             }
         },
+        JSXElement(path) {
+            const openingElement = path.node.openingElement;
+            const attributes = openingElement.attributes;
+            attributes.forEach(attribute => {
+                if (t.isJSXAttribute(attribute) && t.isStringLiteral(attribute.value)) {
+                    const attributeValueNode = attribute.value;
+                    if (isKorean(attributeValueNode.value)) {
+
+                        let key = Object.keys(translations).find(key => translations[key] === attributeValueNode.value);
+
+                        //key가 파일에 없는 경우
+                        if (!key) {
+                            const newKey = `new.message.${Object.keys(translations).length + 1}`;
+                            translations[newKey] = text;
+                            key = newKey;
+                        }
+
+                        // JSX 표현식으로 변환
+                        attribute.value = t.jsxExpressionContainer(
+                            t.callExpression(
+                                t.memberExpression(
+                                    t.memberExpression(
+                                        t.memberExpression(
+                                            t.thisExpression(),
+                                            t.identifier('props')
+                                        ),
+                                        t.identifier('intl')
+                                    ),
+                                    t.identifier('formatMessage')
+                                ),
+                                [
+                                    t.objectExpression([
+                                        t.objectProperty(
+                                            t.identifier('id'),
+                                            t.stringLiteral(key)
+                                        )
+                                    ])
+                                ]
+                            )
+                        );
+                    }
+                }
+            });
+        },
         JSXText(path) {
             const text = path.node.value.trim();
 
@@ -107,7 +166,7 @@ function adjustLangToComp(componentPath, translations) {
             let key = Object.keys(translations).find(key => translations[key] === text);
 
             //key가 파일에 없는 경우
-            if(!key) {
+            if (!key) {
                 const newKey = `new.message.${Object.keys(translations).length + 1}`;
                 translations[newKey] = text;
                 key = newKey;
@@ -132,10 +191,11 @@ function adjustLangToComp(componentPath, translations) {
                 []
             )
             path.replaceWith(formatMessage);
+            isFormattedMessageImportNeed = true;
         },
         Program: {
             exit(path) {
-                if(!hasFormattedMessageImport) {
+                if (isFormattedMessageImportNeed && !hasFormattedMessageImport) {
                     const importFormattedMessage = t.importDeclaration(
                         [t.importSpecifier(t.identifier('FormattedMessage'), t.identifier('FormattedMessage'))],
                         t.stringLiteral('react-intl')
@@ -155,7 +215,12 @@ function adjustLangToComp(componentPath, translations) {
     return result;
 }
 
+const componentPath = './TestComponent.js';
 const result = adjustLangToComp(componentPath, translations);
 
-fs.writeFileSync(componentPath, result, 'utf8');
+if (result) {
+    fs.writeFile('./TestComponentUpdated.js', result, 'utf8', () => {
+    });
+}
+
 console.log('end');
