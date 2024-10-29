@@ -3,7 +3,7 @@ import traverse from '@babel/traverse'
 import generate from '@babel/generator'
 import t from '@babel/types'
 import fs from 'fs'
-import { readFile } from 'fs/promises'
+import {readFile} from 'fs/promises'
 
 //다국어 메시지 관리 파일 정보 추출
 const readLanguage = async (filePath) => {
@@ -13,11 +13,11 @@ const readLanguage = async (filePath) => {
 
     const ast = parser.parse(content, {
         sourceType: 'module',
-        plugins: ['jsx'],
+        plugins   : ['jsx'],
     })
 
     traverse.default(ast, {
-        ExportDefaultDeclaration (path) {
+        ExportDefaultDeclaration(path) {
             const declaration = path.node.declaration
             if (t.isObjectExpression(declaration)) {
                 declaration.properties.forEach(property => {
@@ -76,7 +76,7 @@ const isKorean = (text) => {
 }
 
 //다국어 메시지 관리 파일 컴포넌트 적용
-function convertTextToGlobal (componentPath, translations) {
+function convertTextToGlobal(componentPath, translations) {
 
     const data = fs.readFileSync(componentPath, 'utf8')
 
@@ -84,41 +84,28 @@ function convertTextToGlobal (componentPath, translations) {
     let isFormattedMessageImportNeed = false
     let hasInjectIntlImport = false
     let isInjectIntlImportNeed = false
-    let isIntlWrappedComponent = false
+    let isExportWrappedIntl = false
+
+    //code ast 변환
     const ast = parser.parse(data.toString(), {
         sourceType: 'module',
-        plugins: ['jsx'],
+        plugins   : ['jsx'],
     })
 
     traverse.default(ast, {
-        ImportDeclaration (path) {
-            if (path.node.source.value === 'react-intl') {
-                path.node.specifiers.forEach(specifier => {
-
-                    const importModuleName = specifier.local.name
-
-                    if (importModuleName === 'FormattedMessage') {
-                        hasFormattedMessageImport = true
-                    } else if(importModuleName === 'injectIntl') {
-                        hasInjectIntlImport = true
-                    }
-                })
-            }
-        },
-        JSXElement (path) {
+        JSXElement(path) {
             //JSX 속성 값으로 텍스트 하드코딩 되어 있는 경우 다국어 파일 자동 적용 추가
             const openingElement = path.node.openingElement
             const elementName = openingElement.name.name
-            if(elementName === 'FormattedMessage') return;
+            if (elementName === 'FormattedMessage') return;
             const attributes = openingElement.attributes
             attributes.forEach(attribute => {
                 if (t.isJSXAttribute(attribute) && t.isStringLiteral(attribute.value)) {
                     const attributeValue = attribute.value
                     if (isKorean(attributeValue.value)) {
 
-                        let key = Object.keys(translations).
-                            find(key => translations[key] ===
-                                attributeValue.value)
+                        let key = Object.keys(translations).find(key => translations[key] ===
+                            attributeValue.value)
 
                         //key가 파일에 없는 경우
                         if (!key) {
@@ -165,13 +152,12 @@ function convertTextToGlobal (componentPath, translations) {
                 }
             })
         },
-        JSXText (path) {
+        JSXText(path) {
             const text = path.node.value.trim()
 
             if (!text) return
 
-            let key = Object.keys(translations).
-                find(key => translations[key] === text)
+            let key = Object.keys(translations).find(key => translations[key] === text)
 
             //key가 파일에 없는 경우
             if (!key) {
@@ -204,25 +190,24 @@ function convertTextToGlobal (componentPath, translations) {
             isFormattedMessageImportNeed = true
         },
         Program: {
-            exit (path) {
+            exit(path) {
+                importIntl(isFormattedMessageImportNeed, isInjectIntlImportNeed, path);
 
-                //import 추가
-                if (isFormattedMessageImportNeed &&
-                    !hasFormattedMessageImport) {
-                    const importFormattedMessage = t.importDeclaration(
-                        [
-                            t.importSpecifier(t.identifier('FormattedMessage'),
-                                t.identifier('FormattedMessage'))],
-                        t.stringLiteral('react-intl'),
-                    )
-                    path.node.body.unshift(importFormattedMessage)
+                //wrappingWithInjectIntl
+                const exportDefault = path.node.body.find(node => t.isExportDefaultDeclaration(node));
+                if (isInjectIntlImportNeed) {
+                    const isWrapped = isWrappedWithInjectIntl(exportDefault.declaration);
+                    if (isWrapped) return;
+                    exportDefault.declaration = t.callExpression(
+                        t.identifier('injectIntl'),
+                        [exportDefault.declaration]
+                    );
                 }
-
             },
         },
     })
-    const { code: result } = generate.default(ast, {
-        comments: true,
+    const {code: result} = generate.default(ast, {
+        comments   : true,
         jsescOption: {
             minimal: true,    // ASCII로 변환하지 않음
         },
@@ -231,11 +216,72 @@ function convertTextToGlobal (componentPath, translations) {
     return result
 }
 
-const componentPath = './TestComponent.js'
+function importIntl(isFormattedMessageImportNeed, isInjectIntlImportNeed, path) {
+    if (!(isFormattedMessageImportNeed || isInjectIntlImportNeed)) return;
+
+    //import 추가
+    const importDeclarations = path.node.body.filter(node => t.isImportDeclaration(node));
+    const reactIntlImport = importDeclarations.find(importDeclaration => importDeclaration.source.value === 'react-intl');
+
+    const importFormattedMessageSpecifier = t.importSpecifier(t.identifier('FormattedMessage'), t.identifier('FormattedMessage'));
+    const importInjectIntlSpecifier = t.importSpecifier(t.identifier('injectIntl'), t.identifier('injectIntl'));
+    const newSpecifiers = [];
+
+    //import 없으면 추가
+    let hasFormattedMessageImport = false;
+    let hasInjectIntlImport = false;
+
+    if (reactIntlImport) {
+        const specifiers = reactIntlImport.specifiers;
+        specifiers.forEach(specifier => {
+            const moduleName = specifier.imported.name;
+            if (moduleName === 'formattedMessage') hasFormattedMessageImport = true;
+            if (moduleName === 'injectIntl') hasInjectIntlImport = true;
+        });
+    }
+
+    if (isFormattedMessageImportNeed && !hasFormattedMessageImport) newSpecifiers.push(importFormattedMessageSpecifier);
+    if (importInjectIntlSpecifier && !hasInjectIntlImport) newSpecifiers.push(importInjectIntlSpecifier);
+    if (!newSpecifiers) return;
+
+    if (reactIntlImport) {
+        //추가
+        reactIntlImport.specifiers = [...reactIntlImport.specifiers, ...newSpecifiers];
+    } else {
+        //신규
+        const source = t.stringLiteral('react-intl');
+        const importFormattedMessage = t.importDeclaration(
+            [...newSpecifiers],
+            source,
+        )
+        path.node.body.unshift(importFormattedMessage)
+    }
+}
+
+function isWrappedWithInjectIntl(node) {
+    if(t.isCallExpression(node) && t.isIdentifier(node.callee, {name: 'injectIntl'})) {
+        return true;
+    }
+
+    //재귀 탐색
+    if(t.isCallExpression(node)) {
+        for (const arg of node.arguments) {
+            if(isWrappedWithInjectIntl(arg)) {
+                return true;
+            }
+        }
+
+    }
+    return false;
+}
+
+const componentPath = '/Users/junyoungkim/Projects/ui/invoice/src/components/Dialogs/CloseBusinessDialog.js'
 const result = convertTextToGlobal(componentPath, translations)
 
 if (result) {
-    fs.writeFile('./TestComponentUpdated.js', result, 'utf8', () => {});
+    const outputPath = './component/TestComponentUpdated.js';
+    fs.writeFile(componentPath, result, 'utf8', () => {
+    });
 }
 
 console.log('end')
