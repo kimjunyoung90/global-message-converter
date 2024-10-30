@@ -122,6 +122,30 @@ function convertTextToGlobal(componentPath, translations) {
     });
 
     traverse.default(ast, {
+        ArrowFunctionExpression(path) {
+            //화살표 함수에 내부에 하드코딩 된 한글 문자를 재귀적으로 탐색 하여 다국어 키 적용
+            path.traverse({
+                StringLiteral(subPath) {
+                    const text = subPath.node.value;
+                    if(!isKorean(text)) return;
+
+                    //defaultMessage 에 있는 한국어는 변경 제외
+                    if(subPath.parent?.key?.name === 'defaultMessage') return;
+                    if(subPath.parent?.name?.name === 'defaultMessage') return;
+
+                    let key = Object.keys(translations).find((key) => translations[key] === text);
+
+                    //key가 파일에 없는 경우
+                    if (!key) {
+                        const newKey = `new.message.${Object.keys(translations).length + 1}`;
+                        translations[newKey] = text;
+                        key = newKey;
+                    }
+                    subPath.replaceWith(callIntlFormatMessageExpression(key, text));
+                    isInjectIntlImportNeed = true;
+                }
+            });
+        },
         JSXElement(path) {
             //JSX 속성 값으로 텍스트 하드코딩 되어 있는 경우 다국어 파일 자동 적용 추가
             const openingElement = path.node.openingElement;
@@ -171,30 +195,6 @@ function convertTextToGlobal(componentPath, translations) {
             const formatMessage = createFormatMessage(key, text);
             path.replaceWith(formatMessage);
             isFormattedMessageImportNeed = true;
-        },
-        ArrowFunctionExpression(path) {
-            //화살표 함수에 내부에 하드코딩 된 한글 문자를 재귀적으로 탐색 하여 다국어 키 적용
-            path.traverse({
-               StringLiteral(subPath) {
-                   const text = subPath.node.value;
-                   if(!isKorean(text)) return;
-
-                   //defaultMessage 에 있는 한국어는 변경 제외
-                   if(subPath.parent?.key?.name === 'defaultMessage') return;
-                   if(subPath.parent?.name?.name === 'defaultMessage') return;
-
-                   let key = Object.keys(translations).find((key) => translations[key] === text);
-
-                   //key가 파일에 없는 경우
-                   if (!key) {
-                       const newKey = `new.message.${Object.keys(translations).length + 1}`;
-                       translations[newKey] = text;
-                       key = newKey;
-                   }
-                   subPath.replaceWith(callIntlFormatMessageExpression(key, text));
-                   isInjectIntlImportNeed = true;
-               }
-            });
         },
         Program: {
             exit(path) {
@@ -277,12 +277,12 @@ function isWrappedWithInjectIntl(node) {
     return false;
 }
 
-const componentPath = '/Users/junyoungkim/Projects/ui/invoice/src/components/Pages/ItemMng/ItemMngContainer.js';
+const componentPath = './component/TestComponent.js';
 const result = convertTextToGlobal(componentPath, translations);
 
 if (result) {
-    // const outputPath = './component/TestComponentUpdated.js';
-    const outputPath = componentPath;
+    const outputPath = './component/TestComponentUpdated.js';
+    // const outputPath = componentPath;
     fs.writeFile(outputPath, result, 'utf8', () => {});
 }
 
