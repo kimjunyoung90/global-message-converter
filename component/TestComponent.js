@@ -1,6 +1,39 @@
 import React from 'react';
 
 class TestComponent extends React.Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            message: "환영 메시지입니다.", // 하드코딩된 텍스트
+            dataStatus: "로딩 중입니다...", // 하드코딩된 텍스트
+        };
+    }
+
+    // 사용자 환영 메시지 생성 메서드
+    generateWelcomeMessage() {
+        return `환영합니다, ${this.props.username}!`;
+    }
+
+    // 오류 메시지 표시 함수
+    showError() {
+        console.log('오류 발생: 데이터 불러오기에 실패했습니다.');
+        alert('오류 발생: 데이터를 불러올 수 없습니다.');
+    }
+
+    // 성공 메시지 표시 함수
+    showSuccess() {
+        alert('축하합니다! 모든 작업이 완료되었습니다.');
+    }
+
+    // 입력 필드 초기화 메서드
+    resetFormFields = () => {
+        this.setState({
+            welcomeMessage: '입력된 정보를 초기화합니다.',
+            errorMessage: '모든 필드를 정확히 입력해주세요.',
+        });
+    };
+
     render() {
         return (
             <div>
