@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 import { Command } from 'commander';
-import convertTextToGlobal from './globalization.js';
+import convertTextToGlobal from '../src/convertTextToGlobal.js';
 
 const program = new Command();
 

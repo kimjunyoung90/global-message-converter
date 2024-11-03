@@ -1,6 +1,6 @@
 import React from 'react';
 
-class TestComponent extends React.Component {
+class SampleComponent extends React.Component {
 
     constructor(props) {
         super(props);
@@ -83,4 +83,4 @@ class TestComponent extends React.Component {
     }
 }
 
-export default TestComponent;
+export default SampleComponent;
