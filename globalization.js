@@ -72,8 +72,6 @@ const convertJSXToString = (jsxElement) => {
     }
 };
 
-const translations = await readLanguage('./language/ko.js');
-
 const isKorean = (text) => {
     const koreanRegex = /[가-힣]/;
     return koreanRegex.test(text);
@@ -110,7 +108,7 @@ function createFormatMessage(key, text) {
 
 //다국어 메시지 관리 파일 컴포넌트 적용
 async function convertTextToGlobal(componentPath, messagePath) {
-    const translations = await readLanguage(messagePath);
+    const globalMessages = await readLanguage(messagePath);
     const data = fs.readFileSync(componentPath, 'utf8');
 
     let isFormattedMessageImportNeed = false;
@@ -134,12 +132,12 @@ async function convertTextToGlobal(componentPath, messagePath) {
                     if(subPath.parent?.key?.name === 'defaultMessage') return;
                     if(subPath.parent?.name?.name === 'defaultMessage') return;
 
-                    let key = Object.keys(translations).find((key) => translations[key] === text);
+                    let key = Object.keys(globalMessages).find((key) => globalMessages[key] === text);
 
                     //key가 파일에 없는 경우
                     if (!key) {
-                        const newKey = `new.message.${Object.keys(translations).length + 1}`;
-                        translations[newKey] = text;
+                        const newKey = `new.message.${Object.keys(globalMessages).length + 1}`;
+                        globalMessages[newKey] = text;
                         key = newKey;
                     }
                     subPath.replaceWith(callIntlFormatMessageExpression(key, text));
@@ -165,12 +163,12 @@ async function convertTextToGlobal(componentPath, messagePath) {
                 const attributeValue = attribute.value;
                 if(!isKorean(attributeValue.value)) return;
 
-                let key = Object.keys(translations).find((key) => translations[key] === attributeValue.value);
+                let key = Object.keys(globalMessages).find((key) => globalMessages[key] === attributeValue.value);
 
                 //key가 파일에 없는 경우
                 if (!key) {
-                    const newKey = `new.message.${Object.keys(translations).length + 1}`;
-                    translations[newKey] = attributeValue.value;
+                    const newKey = `new.message.${Object.keys(globalMessages).length + 1}`;
+                    globalMessages[newKey] = attributeValue.value;
                     key = newKey;
                 }
 
@@ -184,12 +182,12 @@ async function convertTextToGlobal(componentPath, messagePath) {
 
             if (!text) return;
             if(!isKorean(text)) return;
-            let key = Object.keys(translations).find((key) => translations[key] === text);
+            let key = Object.keys(globalMessages).find((key) => globalMessages[key] === text);
 
             //key가 파일에 없는 경우
             if (!key) {
-                const newKey = `new.message.${Object.keys(translations).length + 1}`;
-                translations[newKey] = text;
+                const newKey = `new.message.${Object.keys(globalMessages).length + 1}`;
+                globalMessages[newKey] = text;
                 key = newKey;
             }
 
@@ -212,6 +210,7 @@ async function convertTextToGlobal(componentPath, messagePath) {
             },
         },
     });
+
     const { code: result } = generate.default(ast, {
         comments: true,
         jsescOption: {
@@ -219,8 +218,9 @@ async function convertTextToGlobal(componentPath, messagePath) {
         },
         retainLines: true,
     });
+
+    //다국어 메시지 적용 파일 생성
     if (result) {
-        // const outputPath = componentPath;
         fs.writeFile(componentPath, result, 'utf8', () => {});
     }
 }
