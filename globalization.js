@@ -109,7 +109,8 @@ function createFormatMessage(key, text) {
 }
 
 //다국어 메시지 관리 파일 컴포넌트 적용
-function convertTextToGlobal(componentPath, translations) {
+async function convertTextToGlobal(componentPath, messagePath) {
+    const translations = await readLanguage(messagePath);
     const data = fs.readFileSync(componentPath, 'utf8');
 
     let isFormattedMessageImportNeed = false;
@@ -218,7 +219,10 @@ function convertTextToGlobal(componentPath, translations) {
         },
         retainLines: true,
     });
-    return result;
+    if (result) {
+        // const outputPath = componentPath;
+        fs.writeFile(componentPath, result, 'utf8', () => {});
+    }
 }
 
 function importIntl(isFormattedMessageImportNeed, isInjectIntlImportNeed, path) {
@@ -277,13 +281,4 @@ function isWrappedWithInjectIntl(node) {
     return false;
 }
 
-const componentPath = './component/TestComponent.js';
-const result = convertTextToGlobal(componentPath, translations);
-
-if (result) {
-    const outputPath = './component/TestComponentUpdated.js';
-    // const outputPath = componentPath;
-    fs.writeFile(outputPath, result, 'utf8', () => {});
-}
-
-console.log('end');
+export default convertTextToGlobal;
