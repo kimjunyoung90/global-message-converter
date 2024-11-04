@@ -54,7 +54,7 @@ export function importIntl(isFormattedMessageImportNeed, isInjectIntlImportNeed,
     }
 
     if (isFormattedMessageImportNeed && !hasFormattedMessageImport) newSpecifiers.push(importFormattedMessageSpecifier);
-    if (importInjectIntlSpecifier && !hasInjectIntlImport) newSpecifiers.push(importInjectIntlSpecifier);
+    if (isInjectIntlImportNeed && !hasInjectIntlImport) newSpecifiers.push(importInjectIntlSpecifier);
     if (!newSpecifiers) return;
 
     if (reactIntlImport) {
