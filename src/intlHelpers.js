@@ -64,7 +64,7 @@ export function importIntl(isFormattedMessageImportNeed, isInjectIntlImportNeed,
         path.node.body = [
             ...importDeclarations,
             newImportDeclaration,
-            ...path.node.body,
+            ...path.node.body.filter(node => !t.isImportDeclaration(node)),
         ];
     }
 }

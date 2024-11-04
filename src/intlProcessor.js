@@ -89,7 +89,6 @@ function intlProcessor(componentPath, messageFilePath) {
         jsescOption: {
             minimal: true, // ASCII로 변환하지 않음
         },
-        retainLines: true,
     });
 
     //다국어 메시지 적용 파일 생성
