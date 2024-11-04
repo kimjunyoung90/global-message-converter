@@ -36,36 +36,36 @@ export function importIntl(isFormattedMessageImportNeed, isInjectIntlImportNeed,
     const importDeclarations = path.node.body.filter((node) => t.isImportDeclaration(node));
     const reactIntlImport = importDeclarations.find((importDeclaration) => importDeclaration.source.value === 'react-intl');
 
-    const importFormattedMessageSpecifier = t.importSpecifier(t.identifier('FormattedMessage'), t.identifier('FormattedMessage'));
-    const importInjectIntlSpecifier = t.importSpecifier(t.identifier('injectIntl'), t.identifier('injectIntl'));
     const newSpecifiers = [];
-
-    //import 없으면 추가
-    let hasFormattedMessageImport = false;
-    let hasInjectIntlImport = false;
-
-    if (reactIntlImport) {
-        const specifiers = reactIntlImport.specifiers;
-        specifiers.forEach((specifier) => {
-            const moduleName = specifier.imported.name;
-            if (moduleName === 'formattedMessage') hasFormattedMessageImport = true;
-            if (moduleName === 'injectIntl') hasInjectIntlImport = true;
-        });
+    if(isFormattedMessageImportNeed) {
+        const importFormattedMessageSpecifier = t.importSpecifier(t.identifier('FormattedMessage'), t.identifier('FormattedMessage'));
+        const hasFormattedMessageImport = reactIntlImport?.specifiers.find(specifier => specifier.imported.name === 'FormattedMessage');
+        if(!hasFormattedMessageImport) {
+            newSpecifiers.push(importFormattedMessageSpecifier)
+        }
     }
 
-    if (isFormattedMessageImportNeed && !hasFormattedMessageImport) newSpecifiers.push(importFormattedMessageSpecifier);
-    if (isInjectIntlImportNeed && !hasInjectIntlImport) newSpecifiers.push(importInjectIntlSpecifier);
-    if (!newSpecifiers) return;
+    if(isInjectIntlImportNeed) {
+        const importInjectIntlSpecifier = t.importSpecifier(t.identifier('injectIntl'), t.identifier('injectIntl'));
+        const hasInjectIntlImport = reactIntlImport?.specifiers.find(specifier => specifier.imported.name === 'injectIntl');
+        if(!hasInjectIntlImport) {
+            newSpecifiers.push(importInjectIntlSpecifier)
+        }
+    }
+
+    if (newSpecifiers.length === 0) return;
 
     if (reactIntlImport) {
         //추가
         reactIntlImport.specifiers = [...reactIntlImport.specifiers, ...newSpecifiers];
     } else {
-        //신규
         const source = t.stringLiteral('react-intl');
-        const importFormattedMessage = t.importDeclaration([...newSpecifiers], source);
-        //import 아래에 넣기
-        path.node.body.unshift(importFormattedMessage);
+        const newImportDeclaration = t.importDeclaration(newSpecifiers, source);
+        path.node.body = [
+            ...importDeclarations,
+            newImportDeclaration,
+            ...path.node.body,
+        ];
     }
 }
 
