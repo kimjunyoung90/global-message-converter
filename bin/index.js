@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 import { Command } from 'commander';
-import convertTextToGlobal from '../src/convertTextToGlobal.js';
+import intlProcessor from '../src/intlProcessor.js';
 
 const program = new Command();
 
@@ -17,7 +17,7 @@ program
     .action((options) => {
         const targetFile = options.target;
         const globalMessage = options.message;
-        convertTextToGlobal(targetFile, globalMessage);
+        intlProcessor(targetFile, globalMessage);
     });
 
 program
