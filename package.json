@@ -3,7 +3,11 @@
   "version": "1.0.0",
   "description": "A converter that transforms hardcoded text into a format recognizable by internationalization library.",
   "main": "bin/index.js",
-  "keywords": ["react", "react-intl", "converter"],
+  "keywords": [
+    "react",
+    "react-intl",
+    "converter"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -16,13 +20,14 @@
     "@babel/types": "^7.26.0",
     "chalk": "^5.3.0",
     "commander": "^12.1.0",
+    "global-message-converter": "^1.0.0",
     "inquirer": "^12.0.1"
   },
   "type": "module",
   "devDependencies": {
     "prettier": "^3.3.3"
   },
-  "bin" : {
-    "intl-converter": "bin/index.js"
+  "bin": {
+    "gmc": "bin/index.js"
   }
 }
