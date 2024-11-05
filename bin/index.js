@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 import { Command } from 'commander';
-import intlProcessor from '../src/intlProcessor.js';
+import intlConverter from '../src/intlConverter.js';
 
 const program = new Command();
 
@@ -12,12 +12,12 @@ program
 program
     .command('convert')
     .description('하드코딩된 텍스트를 탐지하여 글로벌 메시지 시스템이 읽을 수 있는 형태로 변환합니다.')
-    .option('-t, --target <target>', '변환 대상이 되는 파일 명을 입력해 주세요.')
-    .option('-m, --message <message>', '메시지 파일을 입력해 주세요.')
+    .option('-t, --target <target>', '변환 대상이 되는 파일 또는 폴더를 입력해 주세요.')
+    .option('-m, --message <message>', '메시지 파일 경로를 입력해 주세요.')
     .action((options) => {
         const targetFilePath = options.target;
         const messageFilePath = options.message;
-        intlProcessor(targetFilePath, messageFilePath);
+        intlConverter(targetFilePath, messageFilePath);
     });
 
 program
