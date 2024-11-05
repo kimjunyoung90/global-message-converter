@@ -15,9 +15,9 @@ program
     .option('-t, --target <target>', '변환 대상이 되는 파일 명을 입력해 주세요.')
     .option('-m, --message <message>', '메시지 파일을 입력해 주세요.')
     .action((options) => {
-        const targetFile = options.target;
-        const globalMessage = options.message;
-        intlProcessor(targetFile, globalMessage);
+        const targetFilePath = options.target;
+        const messageFilePath = options.message;
+        intlProcessor(targetFilePath, messageFilePath);
     });
 
 program

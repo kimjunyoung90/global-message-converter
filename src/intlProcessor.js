@@ -26,30 +26,6 @@ function intlProcessor(componentPath, messageFilePath) {
     });
 
     traverse.default(ast, {
-        ArrowFunctionExpression(path) {
-            //화살표 함수에 내부에 하드코딩 된 한글 문자를 재귀적으로 탐색 하여 다국어 키 적용
-            path.traverse({
-                StringLiteral(subPath) {
-                    const text = subPath.node.value;
-                    if (!isKorean(text)) return;
-
-                    //defaultMessage 에 있는 한국어는 변경 제외
-                    if (subPath.parent?.key?.name === 'defaultMessage') return;
-                    if (subPath.parent?.name?.name === 'defaultMessage') return;
-
-                    let key = Object.keys(globalMessages).find((key) => globalMessages[key] === text);
-
-                    //key가 파일에 없는 경우
-                    if (!key) {
-                        const newKey = `new.message.${Object.keys(globalMessages).length + 1}`;
-                        globalMessages[newKey] = text;
-                        key = newKey;
-                    }
-                    subPath.replaceWith(callIntlFormatMessageExpression(key, text));
-                    isInjectIntlImportNeed = true;
-                }
-            });
-        },
         JSXText(path) {
             const text = path.node.value.trim();
 
