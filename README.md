@@ -1,6 +1,25 @@
 # Global Message Converter
 `global-message-converter`는 React 애플리케이션 내 하드코딩된 텍스트를 탐지하여 글로벌 메시지 시스템이 읽을 수 있는 형태로 변환하는 커맨드 라인 도구입니다. 이 라이브러리를 사용하면 다양한 다국어 시스템을 지원하는 메시지 파일을 쉽게 생성할 수 있습니다.
 
+#### 변환 예제
+1. JSX 내부에 존재하는 TEXT 변환
+```javascript
+render() {
+  return (
+    <div>안녕하세요.</div>
+  )
+}
+```
+```javascript
+render() {
+  return (
+    <div>
+      <FormattedMessage id='greeting' defaultMessage='안녕하세요.' />
+    </div>
+  )
+}
+```
+
 ## 시작하기
 이 라이브러리를 사용하려면 Node.js가 설치되어 있어야 합니다. 그런 다음 npm을 사용하여 라이브러리를 설치할 수 있습니다.
 ```bash
@@ -48,7 +67,7 @@ export default {
        "loading": "로딩 중입니다...",
        "error": "오류 발생: 데이터를 불러올 수 없습니다.",
        "success": "축하합니다! 모든 작업이 완료되었습니다."
-    }
+    },
     en: {
         ...
     }
@@ -61,24 +80,6 @@ export default {
    "loading": "로딩 중입니다...",
    "error": "오류 발생: 데이터를 불러올 수 없습니다.",
    "success": "축하합니다! 모든 작업이 완료되었습니다."
-}
-```
-#### 변환 예제
-1. JSX 내부에 존재하는 TEXT 변환
-```javascript
-render() {
-  return (
-    <div>안녕하세요.</div>
-  )
-}
-```
-```javascript
-render() {
-  return (
-    <div>
-      <FormattedMessage id='greeting' defaultMessage='안녕하세요.' />
-    </div>
-  )
 }
 ```
 
