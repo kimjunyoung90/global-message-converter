@@ -84,10 +84,13 @@ export default {
 ```
 
 ## 기여 방법
-1. 저장소를 포크합니다.
+1. [저장소](https://github.com/kimjunyoung90/global-message-converter.git)를 포크합니다.
 2. 브랜치를 생성합니다.
    git checkout -b feature/기능명
 3. 변경사항을 커밋하고 푸시합니다.
+
+- **버그 제보**: 버그가 발견되면 [Issues](https://github.com/kimjunyoung90/global-message-converter/issues) 섹션에 새로운 이슈를 작성해 주세요. 문제를 명확히 설명하고 재현 방법을 포함하면 도움이 됩니다.
+- **기능 요청**: 새로운 기능 제안도 언제나 환영합니다! 제안 내용을 자세히 설명해 주시면 검토에 큰 도움이 됩니다.
 
 ## 라이센스
 이 프로젝트는 MIT 라이선스에 따라 배포됩니다.
