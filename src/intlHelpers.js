@@ -29,38 +29,18 @@ export function createFormatMessage(key, text) {
     return t.jsxElement(openingElement, null, []);
 }
 
-export function importIntl(isFormattedMessageImportNeed, isInjectIntlImportNeed, path) {
-    if (!(isFormattedMessageImportNeed || isInjectIntlImportNeed)) return;
-
-    //import 추가
+export function importFormattedMessage(path) {
     const importDeclarations = path.node.body.filter((node) => t.isImportDeclaration(node));
     const reactIntlImport = importDeclarations.find((importDeclaration) => importDeclaration.source.value === 'react-intl');
+    const hasFormattedMessageImport = reactIntlImport?.specifiers.find(specifier => specifier.imported.name === 'FormattedMessage');
+    if(hasFormattedMessageImport) return;
 
-    const newSpecifiers = [];
-    if(isFormattedMessageImportNeed) {
-        const importFormattedMessageSpecifier = t.importSpecifier(t.identifier('FormattedMessage'), t.identifier('FormattedMessage'));
-        const hasFormattedMessageImport = reactIntlImport?.specifiers.find(specifier => specifier.imported.name === 'FormattedMessage');
-        if(!hasFormattedMessageImport) {
-            newSpecifiers.push(importFormattedMessageSpecifier)
-        }
-    }
-
-    if(isInjectIntlImportNeed) {
-        const importInjectIntlSpecifier = t.importSpecifier(t.identifier('injectIntl'), t.identifier('injectIntl'));
-        const hasInjectIntlImport = reactIntlImport?.specifiers.find(specifier => specifier.imported.name === 'injectIntl');
-        if(!hasInjectIntlImport) {
-            newSpecifiers.push(importInjectIntlSpecifier)
-        }
-    }
-
-    if (newSpecifiers.length === 0) return;
-
+    const importFormattedMessageSpecifier = t.importSpecifier(t.identifier('FormattedMessage'), t.identifier('FormattedMessage'));
     if (reactIntlImport) {
-        //추가
-        reactIntlImport.specifiers = [...reactIntlImport.specifiers, ...newSpecifiers];
+        reactIntlImport.specifiers = [...reactIntlImport.specifiers, importFormattedMessageSpecifier];
     } else {
         const source = t.stringLiteral('react-intl');
-        const newImportDeclaration = t.importDeclaration(newSpecifiers, source);
+        const newImportDeclaration = t.importDeclaration([importFormattedMessageSpecifier], source);
         path.node.body = [
             ...importDeclarations,
             newImportDeclaration,
@@ -69,7 +49,29 @@ export function importIntl(isFormattedMessageImportNeed, isInjectIntlImportNeed,
     }
 }
 
-export function isWrappedWithInjectIntl(node) {
+export function importInjectIntl(path) {
+    //import 추가
+    const importDeclarations = path.node.body.filter((node) => t.isImportDeclaration(node));
+    const reactIntlImport = importDeclarations.find((importDeclaration) => importDeclaration.source.value === 'react-intl');
+
+    const hasInjectIntlImport = reactIntlImport?.specifiers.find(specifier => specifier.imported.name === 'injectIntl');
+    if(hasInjectIntlImport) return;
+
+    const importInjectIntlSpecifier = t.importSpecifier(t.identifier('injectIntl'), t.identifier('injectIntl'));
+    if (reactIntlImport) {
+        reactIntlImport.specifiers = [...reactIntlImport.specifiers, importInjectIntlSpecifier];
+    } else {
+        const source = t.stringLiteral('react-intl');
+        const newImportDeclaration = t.importDeclaration([importInjectIntlSpecifier], source);
+        path.node.body = [
+            ...importDeclarations,
+            newImportDeclaration,
+            ...path.node.body.filter(node => !t.isImportDeclaration(node)),
+        ];
+    }
+}
+
+function isWrappedWithInjectIntl(node) {
     if (t.isCallExpression(node) && t.isIdentifier(node.callee, { name: 'injectIntl' })) {
         return true;
     }
@@ -83,4 +85,11 @@ export function isWrappedWithInjectIntl(node) {
         }
     }
     return false;
+}
+
+export function wrapExportWithInjectIntl(path) {
+    const exportDefault = path.node.body.find((node) => t.isExportDefaultDeclaration(node));
+    const isWrapped = isWrappedWithInjectIntl(exportDefault.declaration);
+    if (isWrapped) return;
+    exportDefault.declaration = t.callExpression(t.identifier('injectIntl'), [exportDefault.declaration]);
 }

@@ -1,10 +1,14 @@
 import parser from '@babel/parser';
 import traverse from '@babel/traverse';
 import generate from '@babel/generator';
-import t from '@babel/types';
 import fs from 'fs';
 import {loadExistingMessages} from './messageUtils.js';
-import {createFormatMessage, importIntl, isWrappedWithInjectIntl} from './intlHelpers.js';
+import {
+    createFormatMessage,
+    importFormattedMessage,
+    importInjectIntl,
+    wrapExportWithInjectIntl
+} from './intlHelpers.js';
 import path from "path";
 
 const isKorean = (text) => {
@@ -41,17 +45,17 @@ function convert(componentPath, globalMessages) {
             const formatMessage = createFormatMessage(key, text);
             path.replaceWith(formatMessage);
             isFormattedMessageImportNeed = true;
-        }, Program: {
+        },
+        Program: {
             exit(path) {
 
-                importIntl(isFormattedMessageImportNeed, isInjectIntlImportNeed, path);
+                if(isFormattedMessageImportNeed) {
+                    importFormattedMessage(path);
+                }
 
-                //wrappingWithInjectIntl
-                const exportDefault = path.node.body.find((node) => t.isExportDefaultDeclaration(node));
-                if (isInjectIntlImportNeed) {
-                    const isWrapped = isWrappedWithInjectIntl(exportDefault.declaration);
-                    if (isWrapped) return;
-                    exportDefault.declaration = t.callExpression(t.identifier('injectIntl'), [exportDefault.declaration]);
+                if(isInjectIntlImportNeed) {
+                    importInjectIntl(path);
+                    wrapExportWithInjectIntl(path);
                 }
             },
         },
@@ -105,3 +109,5 @@ function intlConverter(inputPath, messageFilePath) {
 }
 
 export default intlConverter;
+
+intlConverter('/Users/snvlqkq/WebstormProjects/global-message-converter/components/SampleComponent.js', '/Users/snvlqkq/WebstormProjects/global-message-converter/messages/ko.js');
