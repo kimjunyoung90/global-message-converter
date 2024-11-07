@@ -10,11 +10,10 @@
     "message-converter"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "release": "standard-version"
   },
   "author": "snvlqkq",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "@babel/generator": "^7.26.0",
     "@babel/parser": "^7.26.1",
