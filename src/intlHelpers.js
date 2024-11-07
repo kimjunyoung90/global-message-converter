@@ -1,6 +1,6 @@
 import t from "@babel/types";
 
-export function callIntlFormatMessageExpression(messageKey, text) {
+export function intlFormatMessageFunction(messageKey, text) {
     // JSX 표현식으로 변환
     const intlFormatMessage = t.memberExpression(
         t.memberExpression(t.memberExpression(t.thisExpression(), t.identifier('props')), t.identifier('intl')),
@@ -15,7 +15,7 @@ export function callIntlFormatMessageExpression(messageKey, text) {
     ]);
 }
 
-export function createFormatMessage(key, text) {
+export function formattedMessage(key, text) {
 
     const elementName = t.jsxIdentifier('FormattedMessage');
 

@@ -2,19 +2,17 @@ import parser from '@babel/parser';
 import traverse from '@babel/traverse';
 import generate from '@babel/generator';
 import fs from 'fs';
-import {loadExistingMessages} from './messageUtils.js';
-import {
-    createFormatMessage,
-    importFormattedMessage,
-    importInjectIntl,
-    wrapExportWithInjectIntl
-} from './intlHelpers.js';
 import path from "path";
+import {loadExistingMessages} from './messageUtils.js';
+import {formattedMessage, importFormattedMessage, importInjectIntl, wrapExportWithInjectIntl} from './intlHelpers.js';
+import _ from 'lodash';
 
 const isKorean = (text) => {
     const koreanRegex = /[가-힣]/;
     return koreanRegex.test(text);
 };
+
+const newMessages = {};
 
 function convert(componentPath, globalMessages) {
     const code = fs.readFileSync(componentPath, 'utf8');
@@ -41,8 +39,8 @@ function convert(componentPath, globalMessages) {
                 globalMessages[newKey] = text;
                 key = newKey;
             }
-
-            const formatMessage = createFormatMessage(key, text);
+            newMessages[key] = text;
+            const formatMessage = formattedMessage(key, text);
             path.replaceWith(formatMessage);
             isFormattedMessageImportNeed = true;
         },
@@ -69,7 +67,25 @@ function convert(componentPath, globalMessages) {
 
     //다국어 메시지 적용 파일 생성
     if (result) {
-        fs.writeFile(componentPath, result, 'utf8', () => {
+        fs.writeFile(componentPath, result, 'utf8', (err) => {
+            if(err) {
+                console.error(err);
+            }
+        });
+    }
+    //신규 생성 메시지 파일 생성
+    if(!_.isEmpty(newMessages)) {
+        let newMessageFileName = 'newMessages.json';
+        let counter = 1;
+        while(fs.existsSync(newMessageFileName)) {
+            const parsed = path.parse(newMessageFileName);
+            newMessageFileName = path.join(parsed.dir, `${parsed.name}_${counter}${parsed.ext}`);
+            counter++;
+        }
+        fs.writeFile(newMessageFileName, JSON.stringify(newMessages), 'utf-8', (err) => {
+            if(err) {
+                console.error(err);
+            }
         });
     }
 }
@@ -109,5 +125,3 @@ function intlConverter(inputPath, messageFilePath) {
 }
 
 export default intlConverter;
-
-intlConverter('/Users/snvlqkq/WebstormProjects/global-message-converter/components/SampleComponent.js', '/Users/snvlqkq/WebstormProjects/global-message-converter/messages/ko.js');
