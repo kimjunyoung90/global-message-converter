@@ -1,6 +1,6 @@
 {
   "name": "global-message-converter",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "A converter that transforms hardcoded text into a format recognizable by internationalization library.",
   "main": "bin/index.js",
   "keywords": [
@@ -10,7 +10,8 @@
     "message-converter"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "release": "standard-version"
   },
   "author": "snvlqkq",
   "license": "ISC",
@@ -26,7 +27,8 @@
   },
   "type": "module",
   "devDependencies": {
-    "prettier": "^3.3.3"
+    "prettier": "^3.3.3",
+    "standard-version": "^9.5.0"
   },
   "bin": {
     "gmc": "bin/index.js"
