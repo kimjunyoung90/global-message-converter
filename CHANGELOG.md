@@ -2,14 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-### [1.1.1](https://github.com/kimjunyoung90/global-message-converter/compare/v1.1.0...v1.1.1) (2024-11-07)
-
 ## 1.1.0 (2024-11-07)
 
 
 ### Features
 
 * 신규 생성된 메시지 파일 생성 기능 추가
+* README 파일 수정(신규 생성 파일 관련 내용 추가)
 
 ## 1.0.0 (2024-11-05)
 
