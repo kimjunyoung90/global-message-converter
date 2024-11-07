@@ -1,26 +1,19 @@
 # Global Message Converter
 `global-message-converter`는 React 애플리케이션 내 하드코딩된 텍스트를 탐지하여 
-글로벌 메시지 시스템(react-intl)이 읽을 수 있는 형태로 변환하는 커맨드 라인 도구입니다. 
-이 라이브러리를 사용하면 다양한 다국어 시스템을 지원하는 메시지 파일을 쉽게 생성할 수 있습니다.
+글로벌 메시지 시스템(react-intl)에서 요구하는 형태로 변환하는 커맨드 라인 도구입니다. 
+이 라이브러리를 사용하면 간편하게 변환이 가능합니다.
 현재 한국어만 다른 언어로 변환이 가능합니다.
 
 #### 변환 예제
 1. JSX 내부에 존재하는 TEXT 변환
 ```javascript
-render() {
-  return (
-    <div>안녕하세요.</div>
-  )
-}
-```
-```javascript
-render() {
-  return (
-    <div>
-      <FormattedMessage id='greeting' defaultMessage='안녕하세요.' />
-    </div>
-  )
-}
+//변환 전
+<div>안녕하세요.</div>
+
+//변환 후
+<div>
+    <FormattedMessage id='greeting' defaultMessage='안녕하세요.' />
+</div>
 ```
 
 ## 시작하기
@@ -33,11 +26,11 @@ npm install -g global-message-converter
 ```bash
 gmc [command]
 ```
-### 명령어
-#### convert
+## 명령어
+### convert
 하드코딩된 텍스트를 탐지하여 글로벌 메시지 시스템이 읽을 수 있는 형태로 변환합니다.
 
-#### 사용 예시
+## 사용 예시
 ```bash
 gmc convert -t <파일 또는 폴더 경로> -m <메시지 파일 경로>
 ```
@@ -52,7 +45,7 @@ gmc convert -t <파일 또는 폴더 경로> -m <메시지 파일 경로>
 gmc convert --target ./src/components --message ./messages/messages.json
 ```
 
-### 메시지 파일 형식
+## 메시지 파일 형식
 메시지 파일은 하드코딩된 텍스트를 변환하는데 사용하는 기준값입니다. 
 
 텍스트와 매칭되는 메시지의 키를 탐지합니다. 매칭되는 메시지가 없는 경우 새로운 메시지를 생성하고 신규로 생성된 메시지는 파일 형태(newMessages)로 제공합니다.
