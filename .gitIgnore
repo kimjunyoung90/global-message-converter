@@ -1,6 +1,9 @@
 # Node modules
 **/node_modules/
-# Ignore the components directory and its contents
-/components/
-# Ignore messages directory
-/messages/
+
+# Unnecessary folders
+components/
+messages/
+
+# IDE or Editor files
+.idea/
