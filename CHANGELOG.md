@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.3](https://github.com/kimjunyoung90/global-message-converter/compare/v1.1.1...v1.1.3) (2024-11-08)
+
+
+### Bug Fixes
+
+* 다수 컴포넌트 컨버팅 하는 경우 신규 생성 메시지 파일 계속 생성되는 버그 수정 ([1806c7d](https://github.com/kimjunyoung90/global-message-converter/commit/1806c7d5f496d02bd57ccaf698f77be1c544db76))
+
 ## 1.1.0 (2024-11-07)
 
 
