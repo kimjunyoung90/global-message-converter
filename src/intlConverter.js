@@ -3,9 +3,9 @@ import traverse from '@babel/traverse';
 import generate from '@babel/generator';
 import fs from 'fs';
 import path from "path";
+import _ from 'lodash';
 import {loadExistingMessages} from './messageUtils.js';
 import {formattedMessage, importFormattedMessage, importInjectIntl, wrapExportWithInjectIntl} from './intlHelpers.js';
-import _ from 'lodash';
 
 const isKorean = (text) => {
     const koreanRegex = /[가-힣]/;
@@ -73,21 +73,6 @@ function convert(componentPath, globalMessages) {
             }
         });
     }
-    //신규 생성 메시지 파일 생성
-    if(!_.isEmpty(newMessages)) {
-        let newMessageFileName = 'newMessages.json';
-        let counter = 1;
-        while(fs.existsSync(newMessageFileName)) {
-            const parsed = path.parse(newMessageFileName);
-            newMessageFileName = path.join(parsed.dir, `${parsed.name}_${counter}${parsed.ext}`);
-            counter++;
-        }
-        fs.writeFile(newMessageFileName, JSON.stringify(newMessages), 'utf-8', (err) => {
-            if(err) {
-                console.error(err);
-            }
-        });
-    }
 }
 
 function pathSearchAndConvert(inputPath, globalMessages) {
@@ -122,6 +107,22 @@ function intlConverter(inputPath, messageFilePath) {
 
     //경로 탐색 및 변환
     pathSearchAndConvert(inputPath, globalMessages);
+
+    //신규 생성 메시지 파일 생성
+    if(!_.isEmpty(newMessages)) {
+        let newMessageFileName = 'newMessages.json';
+        let counter = 1;
+        while(fs.existsSync(newMessageFileName)) {
+            const parsed = path.parse(newMessageFileName);
+            newMessageFileName = path.join(parsed.dir, `${parsed.name}_${counter}${parsed.ext}`);
+            counter++;
+        }
+        fs.writeFile(newMessageFileName, JSON.stringify(newMessages), 'utf-8', (err) => {
+            if(err) {
+                console.error(err);
+            }
+        });
+    }
 }
 
 export default intlConverter;
