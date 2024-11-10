@@ -7,13 +7,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Features
 
-* 신규 생성된 메시지 메시지 파일 생성 기능 추가 ([923b333](https://github.com/kimjunyoung90/global-message-converter/commit/923b3332e8d24dd8c09f7d298392bb33a0e2632e))
 * 클래스 메서드 내 텍스트 변환 기능 추가 ([4bcf8e8](https://github.com/kimjunyoung90/global-message-converter/commit/4bcf8e8fa3815000275d88fba47737c87db7b777))
-
-
-### Bug Fixes
-
-* 다수 컴포넌트 컨버팅 하는 경우 신규 생성 메시지 파일 계속 생성되는 버그 수정 ([0e6c0f1](https://github.com/kimjunyoung90/global-message-converter/commit/0e6c0f1247ea586b15d8f18c7620076bf0ad19dd))
 
 ### [1.1.3](https://github.com/kimjunyoung90/global-message-converter/compare/v1.1.1...v1.1.3) (2024-11-08)
 
