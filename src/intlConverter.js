@@ -1,11 +1,18 @@
 import parser from '@babel/parser';
 import traverse from '@babel/traverse';
 import generate from '@babel/generator';
+import t from '@babel/types';
 import fs from 'fs';
 import path from "path";
 import _ from 'lodash';
 import {loadExistingMessages} from './messageUtils.js';
-import {formattedMessage, importFormattedMessage, importInjectIntl, wrapExportWithInjectIntl} from './intlHelpers.js';
+import {
+    intlFormatMessageFunction,
+    formattedMessage,
+    importFormattedMessage,
+    importInjectIntl,
+    wrapExportWithInjectIntl,
+} from './intlHelpers.js';
 
 const isKorean = (text) => {
     const koreanRegex = /[가-힣]/;
@@ -26,6 +33,32 @@ function convert(componentPath, globalMessages) {
     });
 
     traverse.default(ast, {
+        ClassMethod(path) {
+            path.traverse({
+                StringLiteral(subPath) {
+                    const text = subPath.node.value;
+                    if (!isKorean(text)) return;
+
+                    //FixMe: defaultMessage 변경 제외
+                    if (subPath.parent?.key?.name === 'defaultMessage') return;
+                    if (subPath.parent?.name?.name === 'defaultMessage') return;
+                    //FixMe: jsx 속성값 변경 제외
+                    if(t.isJSXAttribute(subPath.container)) return;
+
+                    let key = Object.keys(globalMessages).find((key) => globalMessages[key] === text);
+
+                    //key가 파일에 없는 경우
+                    if (!key) {
+                        const newKey = `new.message.${Object.keys(globalMessages).length + 1}`;
+                        globalMessages[newKey] = text;
+                        newMessages[newKey] = text;
+                        key = newKey;
+                    }
+                    subPath.replaceWith(intlFormatMessageFunction(key, text));
+                    isInjectIntlImportNeed = true;
+                }
+            });
+        },
         JSXText(path) {
             const text = path.node.value.trim();
 
@@ -37,9 +70,9 @@ function convert(componentPath, globalMessages) {
             if (!key) {
                 const newKey = `new.message.${Object.keys(globalMessages).length + 1}`;
                 globalMessages[newKey] = text;
+                newMessages[newKey] = text;
                 key = newKey;
             }
-            newMessages[key] = text;
             const formatMessage = formattedMessage(key, text);
             path.replaceWith(formatMessage);
             isFormattedMessageImportNeed = true;
@@ -102,10 +135,10 @@ function intlConverter(inputPath, messageFilePath) {
         console.error(`${messageFilePath} 메시지 파일을 찾을 수 없습니다.`);
         return;
     }
-    //메시지 추출
+    //메시지 분석
     const globalMessages = loadExistingMessages(messageFilePath);
 
-    //경로 탐색 및 변환
+    //변환
     pathSearchAndConvert(inputPath, globalMessages);
 
     //신규 생성 메시지 파일 생성
