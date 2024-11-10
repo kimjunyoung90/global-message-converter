@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.5.0](https://github.com/kimjunyoung90/global-message-converter/compare/v1.4.0...v1.5.0) (2024-11-10)
+
+
+### Features
+
+* 템플릿 리터럴 변환 기능 추가 ([d046fa5](https://github.com/kimjunyoung90/global-message-converter/commit/d046fa5a4c44b64bc7ae041aa5e13157cbc23106))
+
 ## [1.4.0](https://github.com/kimjunyoung90/global-message-converter/compare/v1.2.0...v1.4.0) (2024-11-10)
 
 
