@@ -5,5 +5,8 @@
 components/
 messages/
 
+# test
+test.js
+
 # IDE or Editor files
 .idea/
