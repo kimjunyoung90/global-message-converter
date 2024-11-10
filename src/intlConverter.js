@@ -3,14 +3,14 @@ import traverse from '@babel/traverse';
 import generate from '@babel/generator';
 import t from '@babel/types';
 import fs from 'fs';
-import path from "path";
+import path from 'path';
 import _ from 'lodash';
-import {loadExistingMessages} from './messageUtils.js';
+import { createNewMessageFile, loadExistingMessages } from './messageUtils.js';
 import {
-    intlFormatMessageFunction,
     formattedMessage,
     importFormattedMessage,
     importInjectIntl,
+    intlFormatMessageFunction,
     wrapExportWithInjectIntl,
 } from './intlHelpers.js';
 
@@ -151,23 +151,6 @@ function processPath(inputPath, globalMessages, newMessages) {
     } else {
         console.error(`${inputPath} 파일 및 폴더가 아닙니다.`);
     }
-}
-
-function createNewMessageFile (newMessages) {
-    let newMessageFileName = 'newMessages.json';
-    let counter = 1;
-    while (fs.existsSync(newMessageFileName)) {
-        const parsed = path.parse(newMessageFileName);
-        newMessageFileName = path.join(parsed.dir,
-            `${parsed.name}_${counter}${parsed.ext}`);
-        counter++;
-    }
-    fs.writeFile(newMessageFileName, JSON.stringify(newMessages), 'utf-8',
-        (err) => {
-            if (err) {
-                console.error(err);
-            }
-        });
 }
 
 function intlConverter(inputPath, messageFilePath) {

@@ -1,7 +1,8 @@
-import traverse from "@babel/traverse";
-import parser from "@babel/parser";
+import traverse from '@babel/traverse';
+import parser from '@babel/parser';
 import t from '@babel/types';
-import fs from "fs";
+import fs from 'fs';
+import path from 'path';
 
 //다국어 메시지 관리 파일 정보 추출
 export const loadExistingMessages = (filePath) => {
@@ -24,3 +25,20 @@ export const loadExistingMessages = (filePath) => {
 
     return messages;
 };
+
+export function createNewMessageFile (newMessages) {
+    let newMessageFileName = 'newMessages.json';
+    let counter = 1;
+    while (fs.existsSync(newMessageFileName)) {
+        const parsed = path.parse(newMessageFileName);
+        newMessageFileName = path.join(parsed.dir,
+            `${parsed.name}_${counter}${parsed.ext}`);
+        counter++;
+    }
+    fs.writeFile(newMessageFileName, JSON.stringify(newMessages), 'utf-8',
+        (err) => {
+            if (err) {
+                console.error(err);
+            }
+        });
+}
