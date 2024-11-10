@@ -14,14 +14,59 @@ import {
     wrapExportWithInjectIntl,
 } from './intlHelpers.js';
 
-const isKorean = (text) => {
-    const koreanRegex = /[가-힣]/;
-    return koreanRegex.test(text);
-};
+const KOREAN_REGEX = /[가-힣]/;
+const isKorean = (text) => KOREAN_REGEX.test(text);
 
-const newMessages = {};
+function handleStringLiteral(path, globalMessages, newMessages) {
+    const text = path.node.value.trim();
 
-function convert(componentPath, globalMessages) {
+    //1. 변환 예외
+    //한국어 아닌 경우
+    if(!isKorean(text)) return false;
+    //defaultMessage 속성
+    if(path.parent?.key?.name === 'defaultMessage') return false;
+    if(path.parent?.name?.name === 'defaultMessage') return false;
+    //JSX 속성 값
+    if(t.isJSXAttribute(path.container)) return false;
+
+    //2. 메시지 탐색 및 생성
+    let messageKey = Object.keys(globalMessages).find((key) => globalMessages[key] === text);
+    if(!messageKey) {
+        const newMessageKey = `new.message.${Object.keys(globalMessages).length + 1}`;
+        globalMessages[newMessageKey] = text;
+        newMessages[newMessageKey] = text;
+        messageKey = newMessageKey;
+    }
+
+    //3. 변환
+    path.replaceWith(intlFormatMessageFunction(messageKey, text));
+    return true;
+}
+
+function handleJSXText(path, globalMessages, newMessages) {
+    const text = path.node.value.trim();
+
+    //1. 변환 예외
+    //공백
+    if(!text) return false;
+    //한국어 아닌 경우
+    if(!isKorean(text)) return false;
+
+    //2. 메시지 탐색 및 변환
+    let messageKey = Object.keys(globalMessages).find((key) => globalMessages[key] === text);
+    if(!messageKey) {
+        const newMessageKey = `new.message.${Object.keys(globalMessages).length + 1}`;
+        globalMessages[newMessageKey] = text;
+        newMessages[newMessageKey] = text;
+        messageKey = newMessageKey;
+    }
+
+    //3. 변환
+    path.replaceWith(formattedMessage(messageKey, text));
+    return true;
+}
+
+function convert(componentPath, globalMessages, newMessages) {
     const code = fs.readFileSync(componentPath, 'utf8');
 
     let isFormattedMessageImportNeed = false;
@@ -36,72 +81,25 @@ function convert(componentPath, globalMessages) {
         ClassMethod(path) {
             path.traverse({
                 StringLiteral(subPath) {
-                    const text = subPath.node.value;
-                    if (!isKorean(text)) return;
-
-                    //FixMe: defaultMessage 변경 제외
-                    if (subPath.parent?.key?.name === 'defaultMessage') return;
-                    if (subPath.parent?.name?.name === 'defaultMessage') return;
-                    //FixMe: jsx 속성값 변경 제외
-                    if(t.isJSXAttribute(subPath.container)) return;
-
-                    let key = Object.keys(globalMessages).find((key) => globalMessages[key] === text);
-
-                    //key가 파일에 없는 경우
-                    if (!key) {
-                        const newKey = `new.message.${Object.keys(globalMessages).length + 1}`;
-                        globalMessages[newKey] = text;
-                        newMessages[newKey] = text;
-                        key = newKey;
+                    if(handleStringLiteral(subPath, globalMessages, newMessages)) {
+                        isInjectIntlImportNeed = true;
                     }
-                    subPath.replaceWith(intlFormatMessageFunction(key, text));
-                    isInjectIntlImportNeed = true;
                 }
             });
         },
         ArrowFunctionExpression(path) {
             path.traverse({
                 StringLiteral(subPath) {
-                    const text = subPath.node.value;
-                    if (!isKorean(text)) return;
-
-                    //FixMe: defaultMessage 변경 제외
-                    if (subPath.parent?.key?.name === 'defaultMessage') return;
-                    if (subPath.parent?.name?.name === 'defaultMessage') return;
-                    //FixMe: jsx 속성값 변경 제외
-                    if(t.isJSXAttribute(subPath.container)) return;
-
-                    let key = Object.keys(globalMessages).find((key) => globalMessages[key] === text);
-
-                    //key가 파일에 없는 경우
-                    if (!key) {
-                        const newKey = `new.message.${Object.keys(globalMessages).length + 1}`;
-                        globalMessages[newKey] = text;
-                        newMessages[newKey] = text;
-                        key = newKey;
+                    if(handleStringLiteral(subPath, globalMessages, newMessages)) {
+                        isInjectIntlImportNeed = true;
                     }
-                    subPath.replaceWith(intlFormatMessageFunction(key, text));
-                    isInjectIntlImportNeed = true;
                 }
             });
         },
         JSXText(path) {
-            const text = path.node.value.trim();
-
-            if (!text) return;
-            if (!isKorean(text)) return;
-            let key = Object.keys(globalMessages).find((key) => globalMessages[key] === text);
-
-            //key가 파일에 없는 경우
-            if (!key) {
-                const newKey = `new.message.${Object.keys(globalMessages).length + 1}`;
-                globalMessages[newKey] = text;
-                newMessages[newKey] = text;
-                key = newKey;
+            if(handleJSXText(path, globalMessages, newMessages)) {
+                isFormattedMessageImportNeed = true;
             }
-            const formatMessage = formattedMessage(key, text);
-            path.replaceWith(formatMessage);
-            isFormattedMessageImportNeed = true;
         },
         Program: {
             exit(path) {
@@ -134,7 +132,7 @@ function convert(componentPath, globalMessages) {
     }
 }
 
-function pathSearchAndConvert(inputPath, globalMessages) {
+function pathSearchAndConvert(inputPath, globalMessages, newMessages) {
 
     if (!fs.existsSync(inputPath)) {
         console.error(`${inputPath} 파일(폴더)를 찾을 수 없습니다.`)
@@ -144,12 +142,12 @@ function pathSearchAndConvert(inputPath, globalMessages) {
     const stats = fs.statSync(inputPath);
     if (stats.isFile()) {
         console.log(`${inputPath} 변환`)
-        convert(inputPath, globalMessages);
+        convert(inputPath, globalMessages, newMessages);
     } else if (stats.isDirectory()) {
         const files = fs.readdirSync(inputPath);
         files.forEach(file => {
             const fullPath = path.join(inputPath, file)
-            pathSearchAndConvert(fullPath, globalMessages);
+            pathSearchAndConvert(fullPath, globalMessages, newMessages);
         });
     } else {
         console.error(`${inputPath} 파일 및 폴더가 아닙니다.`);
@@ -163,9 +161,10 @@ function intlConverter(inputPath, messageFilePath) {
     }
     //메시지 분석
     const globalMessages = loadExistingMessages(messageFilePath);
+    const newMessages = {};
 
     //변환
-    pathSearchAndConvert(inputPath, globalMessages);
+    pathSearchAndConvert(inputPath, globalMessages, newMessages);
 
     //신규 생성 메시지 파일 생성
     if(!_.isEmpty(newMessages)) {
