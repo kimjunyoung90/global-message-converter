@@ -1,18 +1,29 @@
-import t from "@babel/types";
+import t from '@babel/types';
+import _ from 'lodash';
 
-export function intlFormatMessageFunction(messageKey, text) {
+export function intlFormatMessageFunction (messageKey, text, params = []) {
     // JSX 표현식으로 변환
     const intlFormatMessage = t.memberExpression(
-        t.memberExpression(t.memberExpression(t.thisExpression(), t.identifier('props')), t.identifier('intl')),
-        t.identifier('formatMessage')
+        t.memberExpression(
+            t.memberExpression(t.thisExpression(), t.identifier('props')),
+            t.identifier('intl')),
+        t.identifier('formatMessage'),
     );
 
-    return t.callExpression(intlFormatMessage, [
+    const argumentsArray = [
         t.objectExpression([
             t.objectProperty(t.identifier('id'), t.stringLiteral(messageKey)),
             t.objectProperty(t.identifier('defaultMessage'), t.stringLiteral(text)),
         ]),
-    ]);
+    ];
+
+    if (!_.isEmpty(params)) {
+        const objectProperties = Object.entries(params).map(([key, value]) => t.objectProperty(t.identifier(key), value));
+        const argument = t.objectExpression(objectProperties);
+        argumentsArray.push(argument);
+    }
+
+    return t.callExpression(intlFormatMessage, argumentsArray);
 }
 
 export function formattedMessage(key, text) {
@@ -71,8 +82,9 @@ export function importInjectIntl(path) {
     }
 }
 
-function isWrappedWithInjectIntl(node) {
-    if (t.isCallExpression(node) && t.isIdentifier(node.callee, { name: 'injectIntl' })) {
+function isWrappedWithInjectIntl (node) {
+    if (t.isCallExpression(node) &&
+        t.isIdentifier(node.callee, { name: 'injectIntl' })) {
         return true;
     }
 
@@ -87,9 +99,11 @@ function isWrappedWithInjectIntl(node) {
     return false;
 }
 
-export function wrapExportWithInjectIntl(path) {
-    const exportDefault = path.node.body.find((node) => t.isExportDefaultDeclaration(node));
+export function wrapExportWithInjectIntl (path) {
+    const exportDefault = path.node.body.find(
+        (node) => t.isExportDefaultDeclaration(node));
     const isWrapped = isWrappedWithInjectIntl(exportDefault.declaration);
     if (isWrapped) return;
-    exportDefault.declaration = t.callExpression(t.identifier('injectIntl'), [exportDefault.declaration]);
+    exportDefault.declaration = t.callExpression(t.identifier('injectIntl'),
+        [exportDefault.declaration]);
 }
