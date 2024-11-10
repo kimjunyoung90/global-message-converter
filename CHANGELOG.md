@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.4.0](https://github.com/kimjunyoung90/global-message-converter/compare/v1.2.0...v1.4.0) (2024-11-10)
+
+
+### Features
+
+* arrow function 내 텍스트 변환 추가 ([8047b72](https://github.com/kimjunyoung90/global-message-converter/commit/8047b726eae4bd649d667df188db75097a14352f))
+
 ## 1.2.0 (2024-11-10)
 
 
