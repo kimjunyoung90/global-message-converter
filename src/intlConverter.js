@@ -66,7 +66,7 @@ function handleJSXText(path, globalMessages, newMessages) {
     return true;
 }
 
-function convert(componentPath, globalMessages, newMessages) {
+function convertFile(componentPath, globalMessages, newMessages) {
     const code = fs.readFileSync(componentPath, 'utf8');
 
     let isFormattedMessageImportNeed = false;
@@ -132,7 +132,7 @@ function convert(componentPath, globalMessages, newMessages) {
     }
 }
 
-function pathSearchAndConvert(inputPath, globalMessages, newMessages) {
+function processPath(inputPath, globalMessages, newMessages) {
 
     if (!fs.existsSync(inputPath)) {
         console.error(`${inputPath} 파일(폴더)를 찾을 수 없습니다.`)
@@ -142,16 +142,33 @@ function pathSearchAndConvert(inputPath, globalMessages, newMessages) {
     const stats = fs.statSync(inputPath);
     if (stats.isFile()) {
         console.log(`${inputPath} 변환`)
-        convert(inputPath, globalMessages, newMessages);
+        convertFile(inputPath, globalMessages, newMessages);
     } else if (stats.isDirectory()) {
         const files = fs.readdirSync(inputPath);
         files.forEach(file => {
             const fullPath = path.join(inputPath, file)
-            pathSearchAndConvert(fullPath, globalMessages, newMessages);
+            processPath(fullPath, globalMessages, newMessages);
         });
     } else {
         console.error(`${inputPath} 파일 및 폴더가 아닙니다.`);
     }
+}
+
+function createNewMessageFile (newMessages) {
+    let newMessageFileName = 'newMessages.json';
+    let counter = 1;
+    while (fs.existsSync(newMessageFileName)) {
+        const parsed = path.parse(newMessageFileName);
+        newMessageFileName = path.join(parsed.dir,
+            `${parsed.name}_${counter}${parsed.ext}`);
+        counter++;
+    }
+    fs.writeFile(newMessageFileName, JSON.stringify(newMessages), 'utf-8',
+        (err) => {
+            if (err) {
+                console.error(err);
+            }
+        });
 }
 
 function intlConverter(inputPath, messageFilePath) {
@@ -164,22 +181,11 @@ function intlConverter(inputPath, messageFilePath) {
     const newMessages = {};
 
     //변환
-    pathSearchAndConvert(inputPath, globalMessages, newMessages);
+    processPath(inputPath, globalMessages, newMessages);
 
     //신규 생성 메시지 파일 생성
     if(!_.isEmpty(newMessages)) {
-        let newMessageFileName = 'newMessages.json';
-        let counter = 1;
-        while(fs.existsSync(newMessageFileName)) {
-            const parsed = path.parse(newMessageFileName);
-            newMessageFileName = path.join(parsed.dir, `${parsed.name}_${counter}${parsed.ext}`);
-            counter++;
-        }
-        fs.writeFile(newMessageFileName, JSON.stringify(newMessages), 'utf-8', (err) => {
-            if(err) {
-                console.error(err);
-            }
-        });
+        createNewMessageFile(newMessages);
     }
 }
 
