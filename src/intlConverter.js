@@ -17,6 +17,17 @@ import {
 const KOREAN_REGEX = /[가-힣]/;
 const isKorean = (text) => KOREAN_REGEX.test(text);
 
+function getOrCreateMessageKey(text, globalMessages, newMessages) {
+    let messageKey = Object.keys(globalMessages).find((key) => globalMessages[key] === text);
+    if(!messageKey) {
+        const newMessageKey = `new.message.${Object.keys(globalMessages).length + 1}`;
+        globalMessages [newMessageKey] = text;
+        newMessages[newMessageKey] = text;
+        messageKey = newMessageKey;
+    }
+    return messageKey;
+}
+
 function handleStringLiteral(path, globalMessages, newMessages) {
     const text = path.node.value.trim();
 
@@ -30,13 +41,7 @@ function handleStringLiteral(path, globalMessages, newMessages) {
     if(t.isJSXAttribute(path.container)) return false;
 
     //2. 메시지 탐색 및 생성
-    let messageKey = Object.keys(globalMessages).find((key) => globalMessages[key] === text);
-    if(!messageKey) {
-        const newMessageKey = `new.message.${Object.keys(globalMessages).length + 1}`;
-        globalMessages[newMessageKey] = text;
-        newMessages[newMessageKey] = text;
-        messageKey = newMessageKey;
-    }
+    const messageKey = getOrCreateMessageKey(text, globalMessages, newMessages);
 
     //3. 변환
     path.replaceWith(intlFormatMessageFunction(messageKey, text));
@@ -53,13 +58,7 @@ function handleJSXText(path, globalMessages, newMessages) {
     if(!isKorean(text)) return false;
 
     //2. 메시지 탐색 및 변환
-    let messageKey = Object.keys(globalMessages).find((key) => globalMessages[key] === text);
-    if(!messageKey) {
-        const newMessageKey = `new.message.${Object.keys(globalMessages).length + 1}`;
-        globalMessages[newMessageKey] = text;
-        newMessages[newMessageKey] = text;
-        messageKey = newMessageKey;
-    }
+    const messageKey = getOrCreateMessageKey(text, globalMessages, newMessages);
 
     //3. 변환
     path.replaceWith(formattedMessage(messageKey, text));
