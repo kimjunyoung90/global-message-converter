@@ -59,6 +59,32 @@ function convert(componentPath, globalMessages) {
                 }
             });
         },
+        ArrowFunctionExpression(path) {
+            path.traverse({
+                StringLiteral(subPath) {
+                    const text = subPath.node.value;
+                    if (!isKorean(text)) return;
+
+                    //FixMe: defaultMessage 변경 제외
+                    if (subPath.parent?.key?.name === 'defaultMessage') return;
+                    if (subPath.parent?.name?.name === 'defaultMessage') return;
+                    //FixMe: jsx 속성값 변경 제외
+                    if(t.isJSXAttribute(subPath.container)) return;
+
+                    let key = Object.keys(globalMessages).find((key) => globalMessages[key] === text);
+
+                    //key가 파일에 없는 경우
+                    if (!key) {
+                        const newKey = `new.message.${Object.keys(globalMessages).length + 1}`;
+                        globalMessages[newKey] = text;
+                        newMessages[newKey] = text;
+                        key = newKey;
+                    }
+                    subPath.replaceWith(intlFormatMessageFunction(key, text));
+                    isInjectIntlImportNeed = true;
+                }
+            });
+        },
         JSXText(path) {
             const text = path.node.value.trim();
 
