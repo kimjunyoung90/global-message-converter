@@ -65,6 +65,40 @@ function handleJSXText(path, globalMessages, newMessages) {
     return true;
 }
 
+function createTemplateText (expressions, quasis, params) {
+    let text = '';
+    if (expressions.length === 0) {
+        text = quasis.reduce((acc, cur) => acc + cur.value.cooked, '');
+    } else {
+
+        expressions.forEach((expression, index) => {
+            text += quasis[index].value.cooked;
+            let paramKey = '';
+
+            if (t.isIdentifier(expression)) {
+                paramKey = expression.name;
+            } else if (t.isMemberExpression(expression)) {
+                paramKey = expression.property.name
+            } else if (t.isCallExpression(expression)) {
+                if (t.isIdentifier(expression.callee)) {
+                    paramKey = expression.callee.name;
+                } else {
+                    paramKey = expression.callee.property.name;
+                }
+            }
+
+            if(!_.isEmpty(paramKey)) {
+                text += `{${paramKey}}`;
+                params[paramKey] = expression;
+            }
+        });
+
+        //마지막 quasis 처리
+        text += quasis[quasis.length - 1].value.cooked;
+    }
+    return text;
+}
+
 function convertFile(componentPath, globalMessages, newMessages) {
     const code = fs.readFileSync(componentPath, 'utf8');
 
@@ -77,78 +111,57 @@ function convertFile(componentPath, globalMessages, newMessages) {
     });
 
     traverse.default(ast, {
-        ClassMethod(path) {
+        ClassDeclaration(path) {
             path.traverse({
-                StringLiteral(subPath) {
-                    if(handleStringLiteral(subPath, globalMessages, newMessages)) {
-                        isInjectIntlImportNeed = true;
-                    }
-                }
-            });
-        },
-        ArrowFunctionExpression(path) {
-            path.traverse({
-                StringLiteral(subPath) {
-                    if(handleStringLiteral(subPath, globalMessages, newMessages)) {
-                        isInjectIntlImportNeed = true;
-                    }
-                }
-            });
-        },
-        TemplateLiteral(path) {
-            let text = '';
-            const params = {};
-            const quasis = path.node.quasis;
-            const expressions = path.node.expressions;
-
-            if(expressions.length === 0) {
-                text = quasis.reduce((acc, cur) => acc + cur.value.cooked, '');
-            } else {
-                expressions.forEach((expression, index) => {
-                    text += quasis[index].value.cooked;
-                    if(t.isIdentifier(expression)) {
-                        text += `{${expression.name}}`;
-                        params[expression.name] = expression;
-                    } else if(t.isMemberExpression(expression)) {
-                        text += `{${expression.property.name}}`;
-                        params[expression.property.name] = expression;
-                    }else if(t.isCallExpression(expression)) {
-                        if(t.isIdentifier(expression.callee)) {
-                            text += `{${expression.callee.name}}`;
-                            params[expression.callee.name] = expression;
-                        } else {
-                            text += `{${expression.callee.property.name}}`;
-                            params[expression.callee.property.name] = expression;
+                ClassMethod(path) {
+                    path.traverse({
+                        StringLiteral(subPath) {
+                            if(handleStringLiteral(subPath, globalMessages, newMessages)) {
+                                isInjectIntlImportNeed = true;
+                            }
                         }
+                    });
+                },
+                ArrowFunctionExpression(path) {
+                    path.traverse({
+                        StringLiteral(subPath) {
+                            if(handleStringLiteral(subPath, globalMessages, newMessages)) {
+                                isInjectIntlImportNeed = true;
+                            }
+                        }
+                    });
+                },
+                TemplateLiteral(path) {
+                    const params = {};
+                    const quasis = path.node.quasis;
+                    const expressions = path.node.expressions;
+
+                    const text = createTemplateText(expressions, quasis, params);
+
+                    const messageKey = getOrCreateMessageKey(text, globalMessages, newMessages);
+
+                    path.replaceWith(intlFormatMessageFunction(messageKey, text, params));
+                    isInjectIntlImportNeed = true;
+                },
+                JSXText(path) {
+                    if(handleJSXText(path, globalMessages, newMessages)) {
+                        isFormattedMessageImportNeed = true;
                     }
-                });
+                },
+                Program: {
+                    exit(path) {
 
-                //마지막 quasis 처리
-                text+= quasis[quasis.length - 1].value.cooked;
-            }
+                        if(isFormattedMessageImportNeed) {
+                            importFormattedMessage(path);
+                        }
 
-            const messageKey = getOrCreateMessageKey(text, globalMessages, newMessages);
-
-            path.replaceWith(intlFormatMessageFunction(messageKey, text, params));
-            isInjectIntlImportNeed = true;
-        },
-        JSXText(path) {
-            if(handleJSXText(path, globalMessages, newMessages)) {
-                isFormattedMessageImportNeed = true;
-            }
-        },
-        Program: {
-            exit(path) {
-
-                if(isFormattedMessageImportNeed) {
-                    importFormattedMessage(path);
-                }
-
-                if(isInjectIntlImportNeed) {
-                    importInjectIntl(path);
-                    wrapExportWithInjectIntl(path);
-                }
-            },
+                        if(isInjectIntlImportNeed) {
+                            importInjectIntl(path);
+                            wrapExportWithInjectIntl(path);
+                        }
+                    },
+                },
+            });
         },
     });
 
