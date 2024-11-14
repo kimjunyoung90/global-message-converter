@@ -7,16 +7,40 @@
 **[CHANGELOG](./CHANGELOG.md)**: 이곳에서 최신 업데이트 내역을 확인하세요.
 
 #### 변환 예제
-1. JSX 내부에 존재하는 TEXT 변환
-```javascript
-//변환 전
-<div>안녕하세요.</div>
+1. JSX 내부 텍스트 변환
 
-//변환 후
-<div>
-    <FormattedMessage id='greeting' defaultMessage='안녕하세요.' />
-</div>
-```
+> **Before:**
+> ```javascript
+> <div>안녕하세요.</div>
+> ```
+
+> **After:**
+> ```javascript
+> <div><FormattedMessage id="greeting" defaultMessage="안녕하세요." /></div>
+> ```
+
+
+2. 일반 텍스트 변환
+> **Before:**
+> ```javascript
+> const hi = '안녕하세요.';
+> ```
+
+> **After:**
+> ```javascript
+> const hi = intl.formatMessage({ id: 'new.message', defaultMessage: '안녕하세요.' });
+> ```
+
+3. 템플릿 리터럴 변환
+> **Before:**
+> ```javascript
+> const error = `${error} 발생`;
+> ```
+
+> **After:**
+> ```javascript
+> const error = intl.formatMessage({ id: 'error.message' }, { error });
+> ```
 
 ## 시작하기
 이 라이브러리를 사용하려면 Node.js가 설치되어 있어야 합니다. 그런 다음 npm을 사용하여 라이브러리를 설치할 수 있습니다.
