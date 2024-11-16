@@ -179,7 +179,7 @@ function convert(componentPath, globalMessages, newMessages) {
             path.traverse({
                 StringLiteral(subPath) {
                     if(convertStringLiteral(false, subPath, globalMessages, newMessages)) {
-                        isInjectIntlImportNeed = false;
+                        isInjectIntlImportNeed = true;
                     }
                 },
                 TemplateLiteral(path) {
