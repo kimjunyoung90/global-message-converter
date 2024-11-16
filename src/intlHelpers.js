@@ -108,7 +108,7 @@ export function importInjectIntl (path) {
     }
 }
 
-export function importUseIntl (node) {
+export function importIntlHook (node) {
     //import 확인
     const importDeclarations = node.body.filter((node) => t.isImportDeclaration(node));
 

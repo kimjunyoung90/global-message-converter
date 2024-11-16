@@ -9,7 +9,7 @@ import { createNewMessageFile, loadMessages } from './messageUtils.js';
 import {
     formattedMessage,
     importFormattedMessage, importInjectIntl,
-    importUseIntl,
+    importIntlHook,
     intlFormatMessageFunction, wrapExportWithInjectIntl,
 } from './intlHelpers.js';
 
@@ -312,7 +312,7 @@ function convert(componentPath, globalMessages, newMessages) {
                 }
 
                 if(isUseIntlImportNeed) {
-                    importUseIntl(path.node);
+                    importIntlHook(path.node);
                 }
 
                 if(isInjectIntlImportNeed) {
