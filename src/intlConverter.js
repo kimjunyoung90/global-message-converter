@@ -86,9 +86,13 @@ function convertTemplateLiteral (isFunctionComponent, path, globalMessages, newM
         text += quasis[quasis.length - 1].value.cooked;
     }
 
+    if(!text) return false;
+
     const messageKey = getOrCreateMessageKey(text, globalMessages, newMessages);
 
     path.replaceWith(intlFormatMessageFunction(isFunctionComponent, messageKey, text, params));
+
+    return true;
 }
 
 function convertJSXText(path, globalMessages, newMessages) {
@@ -179,8 +183,9 @@ function convert(componentPath, globalMessages, newMessages) {
                     }
                 },
                 TemplateLiteral(path) {
-                    convertTemplateLiteral(false, path, globalMessages, newMessages);
-                    isInjectIntlImportNeed = true;
+                    if(convertTemplateLiteral(false, path, globalMessages, newMessages)) {
+                        isInjectIntlImportNeed = true;
+                    }
                 },
                 JSXText(path) {
                     if(convertJSXText(path, globalMessages, newMessages)) {
@@ -199,8 +204,9 @@ function convert(componentPath, globalMessages, newMessages) {
                     }
                 },
                 TemplateLiteral(path) {
-                    convertTemplateLiteral(true, path, globalMessages, newMessages);
-                    isUseIntlImportNeed = true;
+                    if(convertTemplateLiteral(true, path, globalMessages, newMessages)) {
+                        isUseIntlImportNeed = true;
+                    }
                 },
                 JSXText(path) {
                     if(convertJSXText(path, globalMessages, newMessages)) {
@@ -223,8 +229,9 @@ function convert(componentPath, globalMessages, newMessages) {
                     }
                 },
                 TemplateLiteral(path) {
-                    convertTemplateLiteral(true, path, globalMessages, newMessages);
-                    isUseIntlImportNeed = true;
+                    if(convertTemplateLiteral(true, path, globalMessages, newMessages)) {
+                        isUseIntlImportNeed = true;
+                    }
                 },
                 JSXText(path) {
                     if(convertJSXText(path, globalMessages, newMessages)) {
@@ -247,8 +254,9 @@ function convert(componentPath, globalMessages, newMessages) {
                     }
                 },
                 TemplateLiteral(path) {
-                    convertTemplateLiteral(true, path, globalMessages, newMessages);
-                    isUseIntlImportNeed = true;
+                    if(convertTemplateLiteral(true, path, globalMessages, newMessages)) {
+                        isUseIntlImportNeed = true;
+                    }
                 },
                 JSXText(path) {
                     if(convertJSXText(path, globalMessages, newMessages)) {
