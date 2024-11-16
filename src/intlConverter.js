@@ -174,7 +174,7 @@ function convert(componentPath, globalMessages, newMessages) {
 
     let isFormattedMessageImportNeed = false;
     let isInjectIntlImportNeed = false;
-    let isUseIntl = false;
+    let isUseIntlImportNeed = false;
 
     //code ast 변환
     const ast = parser.parse(code, {
@@ -214,7 +214,7 @@ function convert(componentPath, globalMessages, newMessages) {
             path.traverse({
                 StringLiteral(subPath) {
                     if(handleStringLiteral(true, subPath, globalMessages, newMessages)) {
-                        isUseIntl = true;
+                        isUseIntlImportNeed = true;
                     }
                 },
                 TemplateLiteral(path) {
@@ -227,7 +227,7 @@ function convert(componentPath, globalMessages, newMessages) {
                     const messageKey = getOrCreateMessageKey(text, globalMessages, newMessages);
 
                     path.replaceWith(intlFormatMessageFunction(true, messageKey, text, params));
-                    isUseIntl = true;
+                    isUseIntlImportNeed = true;
                 },
                 JSXText(path) {
                     if(handleJSXText(path, globalMessages, newMessages)) {
@@ -236,7 +236,7 @@ function convert(componentPath, globalMessages, newMessages) {
                 }
             });
 
-            if(isUseIntl) {
+            if(isUseIntlImportNeed) {
                 declareUseIntlInit(path.node);
             }
         },
@@ -246,7 +246,7 @@ function convert(componentPath, globalMessages, newMessages) {
             path.traverse({
                 StringLiteral(subPath) {
                     if(handleStringLiteral(true, subPath, globalMessages, newMessages)) {
-                        isUseIntl = true;
+                        isUseIntlImportNeed = true;
                     }
                 },
                 TemplateLiteral(path) {
@@ -259,7 +259,7 @@ function convert(componentPath, globalMessages, newMessages) {
                     const messageKey = getOrCreateMessageKey(text, globalMessages, newMessages);
 
                     path.replaceWith(intlFormatMessageFunction(true, messageKey, text, params));
-                    isUseIntl = true;
+                    isUseIntlImportNeed = true;
                 },
                 JSXText(path) {
                     if(handleJSXText(path, globalMessages, newMessages)) {
@@ -268,7 +268,7 @@ function convert(componentPath, globalMessages, newMessages) {
                 }
             });
 
-            if(isUseIntl) {
+            if(isUseIntlImportNeed) {
                 declareUseIntlInit(path.node.init);
             }
         },
@@ -278,7 +278,7 @@ function convert(componentPath, globalMessages, newMessages) {
             path.traverse({
                 StringLiteral(subPath) {
                     if(handleStringLiteral(true, subPath, globalMessages, newMessages)) {
-                        isUseIntl = true;
+                        isUseIntlImportNeed = true;
                     }
                 },
                 TemplateLiteral(path) {
@@ -291,7 +291,7 @@ function convert(componentPath, globalMessages, newMessages) {
                     const messageKey = getOrCreateMessageKey(text, globalMessages, newMessages);
 
                     path.replaceWith(intlFormatMessageFunction(true, messageKey, text, params));
-                    isUseIntl = true;
+                    isUseIntlImportNeed = true;
                 },
                 JSXText(path) {
                     if(handleJSXText(path, globalMessages, newMessages)) {
@@ -300,7 +300,7 @@ function convert(componentPath, globalMessages, newMessages) {
                 }
             });
 
-            if(isUseIntl) {
+            if(isUseIntlImportNeed) {
                 declareUseIntlInit(path.node.declaration);
             }
         },
@@ -311,7 +311,7 @@ function convert(componentPath, globalMessages, newMessages) {
                     importFormattedMessage(path);
                 }
 
-                if(isUseIntl) {
+                if(isUseIntlImportNeed) {
                     importUseIntl(path.node);
                 }
 
