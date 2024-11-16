@@ -170,9 +170,17 @@ function convert(componentPath, globalMessages, newMessages) {
     let isIntlHookNeed = false;
 
     //code ast 변환
-    const ast = parser.parse(code, {
-        sourceType: 'module', plugins: ['jsx'],
-    });
+    let ast;
+    try {
+        // code ast 변환
+        ast = parser.parse(code, {
+            sourceType: 'module',
+            plugins: ['jsx'],
+        });
+    } catch (error) {
+        console.error(`구문 분석 오류: ${componentPath} - ${error.message}`);
+        return; // 구문 분석에 실패한 경우 변환을 중단
+    }
 
     const visitor = {
         ClassDeclaration(path) {
@@ -302,7 +310,9 @@ function convert(componentPath, globalMessages, newMessages) {
         fs.writeFile(componentPath, result, 'utf8', (err) => {
             if(err) {
                 console.error(err);
+                return;
             }
+            console.log(`${componentPath} 변환`);
         });
     }
 }
@@ -316,7 +326,6 @@ function searchPathAndConvert(inputPath, globalMessages, newMessages) {
 
     const stats = fs.statSync(inputPath);
     if (stats.isFile()) {
-        console.log(`${inputPath} 변환`);
         convert(inputPath, globalMessages, newMessages);
     } else if (stats.isDirectory()) {
         const files = fs.readdirSync(inputPath);
