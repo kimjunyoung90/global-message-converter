@@ -185,7 +185,6 @@ function convert(componentPath, globalMessages, newMessages) {
         ClassDeclaration(path) {
             path.traverse({
                 StringLiteral(subPath) {
-                    if(t.isJSXAttribute(subPath.parent)) return;
                     if(handleStringLiteral(false, subPath, globalMessages, newMessages)) {
                         isInjectIntlImportNeed = false;
                     }
@@ -214,7 +213,6 @@ function convert(componentPath, globalMessages, newMessages) {
 
             path.traverse({
                 StringLiteral(subPath) {
-                    if(t.isJSXAttribute(subPath.parent)) return;
                     if(handleStringLiteral(true, subPath, globalMessages, newMessages)) {
                         isUseIntl = true;
                     }
@@ -247,7 +245,6 @@ function convert(componentPath, globalMessages, newMessages) {
 
             path.traverse({
                 StringLiteral(subPath) {
-                    if(t.isJSXAttribute(subPath.parent)) return;
                     if(handleStringLiteral(true, subPath, globalMessages, newMessages)) {
                         isUseIntl = true;
                     }
@@ -280,7 +277,6 @@ function convert(componentPath, globalMessages, newMessages) {
 
             path.traverse({
                 StringLiteral(subPath) {
-                    if(t.isJSXAttribute(subPath.parent)) return;
                     if(handleStringLiteral(true, subPath, globalMessages, newMessages)) {
                         isUseIntl = true;
                     }
