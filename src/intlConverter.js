@@ -148,7 +148,7 @@ function isFunctionComponent (node) {
 
 }
 
-function declareUseIntlInit (node) {
+function insertIntlHook (node) {
     const blockStatement = node.body;
     const variableDeclarations = blockStatement.body.filter(
         node => t.isVariableDeclaration(node));
@@ -181,7 +181,7 @@ function convert(componentPath, globalMessages, newMessages) {
         sourceType: 'module', plugins: ['jsx'],
     });
 
-    traverse.default(ast, {
+    const visitor = {
         ClassDeclaration(path) {
             path.traverse({
                 StringLiteral(subPath) {
@@ -237,7 +237,7 @@ function convert(componentPath, globalMessages, newMessages) {
             });
 
             if(isUseIntlImportNeed) {
-                declareUseIntlInit(path.node);
+                insertIntlHook(path.node);
             }
         },
         VariableDeclarator(path) {
@@ -269,7 +269,7 @@ function convert(componentPath, globalMessages, newMessages) {
             });
 
             if(isUseIntlImportNeed) {
-                declareUseIntlInit(path.node.init);
+                insertIntlHook(path.node.init);
             }
         },
         ExportDefaultDeclaration(path) {
@@ -301,7 +301,7 @@ function convert(componentPath, globalMessages, newMessages) {
             });
 
             if(isUseIntlImportNeed) {
-                declareUseIntlInit(path.node.declaration);
+                insertIntlHook(path.node.declaration);
             }
         },
         Program: {
@@ -321,10 +321,13 @@ function convert(componentPath, globalMessages, newMessages) {
                 }
             },
         },
-    });
+    };
+
+    traverse.default(ast, visitor);
 
     const {code: result} = generate.default(ast, {
-        comments: true, jsescOption: {
+        comments: true,
+        jsescOption: {
             minimal: true, // ASCII로 변환하지 않음
         },
     });
