@@ -300,6 +300,7 @@ function convert(componentPath, globalMessages, newMessages) {
         traverse.default(ast, visitor);
     } catch (error) {
         console.error(`변환 오류: ${componentPath} - ${error.message}`);
+        return; // 변환 도중 에러 발생한 경우 변환 중단
     }
 
     const {code: result} = generate.default(ast, {
