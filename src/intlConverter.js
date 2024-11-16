@@ -169,7 +169,7 @@ function declareUseIntlInit (node) {
     }
 }
 
-function convertFile(componentPath, globalMessages, newMessages) {
+function convert(componentPath, globalMessages, newMessages) {
     const code = fs.readFileSync(componentPath, 'utf8');
 
     let isFormattedMessageImportNeed = false;
@@ -343,7 +343,7 @@ function convertFile(componentPath, globalMessages, newMessages) {
     }
 }
 
-function converting(inputPath, globalMessages, newMessages) {
+function searchPathAndConvert(inputPath, globalMessages, newMessages) {
 
     if (!fs.existsSync(inputPath)) {
         console.error(`${inputPath} 파일(폴더)를 찾을 수 없습니다.`);
@@ -353,12 +353,12 @@ function converting(inputPath, globalMessages, newMessages) {
     const stats = fs.statSync(inputPath);
     if (stats.isFile()) {
         console.log(`${inputPath} 변환`);
-        convertFile(inputPath, globalMessages, newMessages);
+        convert(inputPath, globalMessages, newMessages);
     } else if (stats.isDirectory()) {
         const files = fs.readdirSync(inputPath);
         files.forEach(file => {
             const fullPath = path.join(inputPath, file)
-            converting(fullPath, globalMessages, newMessages);
+            searchPathAndConvert(fullPath, globalMessages, newMessages);
         });
     } else {
         console.error(`${inputPath} 파일 및 폴더가 아닙니다.`);
@@ -375,7 +375,7 @@ function intlConverter(inputPath, messageFilePath) {
     const newMessages = {};
 
     //변환
-    converting(inputPath, globalMessages, newMessages);
+    searchPathAndConvert(inputPath, globalMessages, newMessages);
 
     //변환된 컴포넌트 생성
     if(!_.isEmpty(newMessages)) {
