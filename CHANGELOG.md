@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.6.0](https://github.com/kimjunyoung90/global-message-converter/compare/v1.5.1...v1.6.0) (2024-11-16)
+
+
+### Features
+
+* 함수형 컴포넌트 변환 기능 추가 ([86c0d97](https://github.com/kimjunyoung90/global-message-converter/commit/86c0d97a74c8ba2c7c85648d7e28beeca589161c))
+
+
+### Bug Fixes
+
+* injectIntl import 되지 않는 버그 수정 ([60c4e1d](https://github.com/kimjunyoung90/global-message-converter/commit/60c4e1d850bb93ae793c497d1e7f1c3200fd23b5))
+* templateLiteral 빈값일 때 변환되는 버그 수정 ([f5b120e](https://github.com/kimjunyoung90/global-message-converter/commit/f5b120e0ffa3689b7064cfe88031fffece88a619))
+* 클래스 컴포넌트 텍스트 변환 로직 간단하게 수정 ([93433a6](https://github.com/kimjunyoung90/global-message-converter/commit/93433a65eae8f11df90ea6577c50abc6e3f0ce9c))
+
 ### [1.5.1](https://github.com/kimjunyoung90/global-message-converter/compare/v1.5.0...v1.5.1) (2024-11-14)
 
 ## [1.5.0](https://github.com/kimjunyoung90/global-message-converter/compare/v1.4.0...v1.5.0) (2024-11-10)
