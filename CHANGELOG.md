@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.6.3](https://github.com/kimjunyoung90/global-message-converter/compare/v1.6.2...v1.6.3) (2024-11-16)
+
+
+### Bug Fixes
+
+* 코드 변환 오류 시 변환 중단 추가 ([fecb8a7](https://github.com/kimjunyoung90/global-message-converter/commit/fecb8a773e18dd17eef5ff8da0246a8c4cc36d97))
+
 ### [1.6.2](https://github.com/kimjunyoung90/global-message-converter/compare/v1.6.1...v1.6.2) (2024-11-16)
 
 
