@@ -296,7 +296,11 @@ function convert(componentPath, globalMessages, newMessages) {
         },
     };
 
-    traverse.default(ast, visitor);
+    try {
+        traverse.default(ast, visitor);
+    } catch (error) {
+        console.error(`변환 오류: ${componentPath} - ${error.message}`);
+    }
 
     const {code: result} = generate.default(ast, {
         comments: true,
