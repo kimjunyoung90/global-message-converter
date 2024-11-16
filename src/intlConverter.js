@@ -167,7 +167,7 @@ function convert(componentPath, globalMessages, newMessages) {
 
     let isFormattedMessageImportNeed = false;
     let isInjectIntlImportNeed = false;
-    let isUseIntlImportNeed = false;
+    let isIntlHookNeed = false;
 
     //code ast 변환
     const ast = parser.parse(code, {
@@ -200,12 +200,12 @@ function convert(componentPath, globalMessages, newMessages) {
             path.traverse({
                 StringLiteral(subPath) {
                     if(convertStringLiteral(true, subPath, globalMessages, newMessages)) {
-                        isUseIntlImportNeed = true;
+                        isIntlHookNeed = true;
                     }
                 },
                 TemplateLiteral(path) {
                     if(convertTemplateLiteral(true, path, globalMessages, newMessages)) {
-                        isUseIntlImportNeed = true;
+                        isIntlHookNeed = true;
                     }
                 },
                 JSXText(path) {
@@ -215,7 +215,7 @@ function convert(componentPath, globalMessages, newMessages) {
                 }
             });
 
-            if(isUseIntlImportNeed) {
+            if(isIntlHookNeed) {
                 insertIntlHook(path.node);
             }
         },
@@ -225,12 +225,12 @@ function convert(componentPath, globalMessages, newMessages) {
             path.traverse({
                 StringLiteral(subPath) {
                     if(convertStringLiteral(true, subPath, globalMessages, newMessages)) {
-                        isUseIntlImportNeed = true;
+                        isIntlHookNeed = true;
                     }
                 },
                 TemplateLiteral(path) {
                     if(convertTemplateLiteral(true, path, globalMessages, newMessages)) {
-                        isUseIntlImportNeed = true;
+                        isIntlHookNeed = true;
                     }
                 },
                 JSXText(path) {
@@ -240,7 +240,7 @@ function convert(componentPath, globalMessages, newMessages) {
                 }
             });
 
-            if(isUseIntlImportNeed) {
+            if(isIntlHookNeed) {
                 insertIntlHook(path.node.init);
             }
         },
@@ -250,12 +250,12 @@ function convert(componentPath, globalMessages, newMessages) {
             path.traverse({
                 StringLiteral(subPath) {
                     if(convertStringLiteral(true, subPath, globalMessages, newMessages)) {
-                        isUseIntlImportNeed = true;
+                        isIntlHookNeed = true;
                     }
                 },
                 TemplateLiteral(path) {
                     if(convertTemplateLiteral(true, path, globalMessages, newMessages)) {
-                        isUseIntlImportNeed = true;
+                        isIntlHookNeed = true;
                     }
                 },
                 JSXText(path) {
@@ -265,7 +265,7 @@ function convert(componentPath, globalMessages, newMessages) {
                 }
             });
 
-            if(isUseIntlImportNeed) {
+            if(isIntlHookNeed) {
                 insertIntlHook(path.node.declaration);
             }
         },
@@ -276,7 +276,7 @@ function convert(componentPath, globalMessages, newMessages) {
                     importFormattedMessage(path);
                 }
 
-                if(isUseIntlImportNeed) {
+                if(isIntlHookNeed) {
                     importIntlHook(path.node);
                 }
 
