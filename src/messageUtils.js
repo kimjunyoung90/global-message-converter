@@ -5,7 +5,7 @@ import fs from 'fs';
 import path from 'path';
 
 //다국어 메시지 관리 파일 정보 추출
-export const loadExistingMessages = (filePath) => {
+export const loadMessages = (filePath) => {
     const messages = {};
 
     const content = fs.readFileSync(filePath, 'utf8');
