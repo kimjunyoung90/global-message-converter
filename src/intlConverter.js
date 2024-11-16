@@ -8,9 +8,12 @@ import _ from 'lodash';
 import { createNewMessageFile, loadMessages } from './messageUtils.js';
 import {
     formattedMessage,
-    importFormattedMessage, importInjectIntl,
+    importFormattedMessage,
+    importInjectIntl,
     importIntlHook,
-    intlFormatMessageFunction, wrapExportWithInjectIntl,
+    insertIntlHook,
+    intlFormatMessageFunction,
+    wrapExportWithInjectIntl,
 } from './intlHelpers.js';
 
 const KOREAN_REGEX = /[가-힣]/;
@@ -27,7 +30,7 @@ function getOrCreateMessageKey(text, globalMessages, newMessages) {
     return messageKey;
 }
 
-function handleStringLiteral(isFunctionComponent, path, globalMessages, newMessages) {
+function convertStringLiteral(isFunctionComponent, path, globalMessages, newMessages) {
     const text = path.node.value.trim();
 
     //1. 변환 예외
@@ -47,24 +50,11 @@ function handleStringLiteral(isFunctionComponent, path, globalMessages, newMessa
     return true;
 }
 
-function handleJSXText(path, globalMessages, newMessages) {
-    const text = path.node.value.trim();
+function convertTemplateLiteral (isFunctionComponent, path, globalMessages, newMessages) {
+    const params = {};
+    const quasis = path.node.quasis;
+    const expressions = path.node.expressions;
 
-    //1. 변환 예외
-    //공백
-    if(!text) return false;
-    //한국어 아닌 경우
-    if(!isKorean(text)) return false;
-
-    //2. 메시지 탐색 및 변환
-    const messageKey = getOrCreateMessageKey(text, globalMessages, newMessages);
-
-    //3. 변환
-    path.replaceWith(formattedMessage(messageKey, text));
-    return true;
-}
-
-function createTemplateText (expressions, quasis, params) {
     let text = '';
     if (expressions.length === 0) {
         text = quasis.reduce((acc, cur) => acc + cur.value.cooked, '');
@@ -95,7 +85,27 @@ function createTemplateText (expressions, quasis, params) {
         //마지막 quasis 처리
         text += quasis[quasis.length - 1].value.cooked;
     }
-    return text;
+
+    const messageKey = getOrCreateMessageKey(text, globalMessages, newMessages);
+
+    path.replaceWith(intlFormatMessageFunction(isFunctionComponent, messageKey, text, params));
+}
+
+function convertJSXText(path, globalMessages, newMessages) {
+    const text = path.node.value.trim();
+
+    //1. 변환 예외
+    //공백
+    if(!text) return false;
+    //한국어 아닌 경우
+    if(!isKorean(text)) return false;
+
+    //2. 메시지 탐색 및 변환
+    const messageKey = getOrCreateMessageKey(text, globalMessages, newMessages);
+
+    //3. 변환
+    path.replaceWith(formattedMessage(messageKey, text));
+    return true;
 }
 
 function isFunctionComponent (node) {
@@ -148,27 +158,6 @@ function isFunctionComponent (node) {
 
 }
 
-function insertIntlHook (node) {
-    const blockStatement = node.body;
-    const variableDeclarations = blockStatement.body.filter(
-        node => t.isVariableDeclaration(node));
-    const variableDeclarators = variableDeclarations.filter(
-        variableDeclaration => variableDeclaration.declarations);
-    const intlInitialize = variableDeclarators.find(
-        variableDeclarator => t.isIdentifier(variableDeclarator.id) &&
-            (variableDeclarator.id.name === 'intl'));
-
-    if (_.isEmpty(intlInitialize)) {
-        const variableDeclarator = t.variableDeclarator(t.identifier('intl'),
-            t.callExpression(t.identifier('useIntl'), []));
-        const useIntlInitialization = t.variableDeclaration(
-            'const',
-            [variableDeclarator],
-        );
-        blockStatement.body.unshift(useIntlInitialization);
-    }
-}
-
 function convert(componentPath, globalMessages, newMessages) {
     const code = fs.readFileSync(componentPath, 'utf8');
 
@@ -185,24 +174,16 @@ function convert(componentPath, globalMessages, newMessages) {
         ClassDeclaration(path) {
             path.traverse({
                 StringLiteral(subPath) {
-                    if(handleStringLiteral(false, subPath, globalMessages, newMessages)) {
+                    if(convertStringLiteral(false, subPath, globalMessages, newMessages)) {
                         isInjectIntlImportNeed = false;
                     }
                 },
                 TemplateLiteral(path) {
-                    const params = {};
-                    const quasis = path.node.quasis;
-                    const expressions = path.node.expressions;
-
-                    const text = createTemplateText(expressions, quasis, params);
-
-                    const messageKey = getOrCreateMessageKey(text, globalMessages, newMessages);
-
-                    path.replaceWith(intlFormatMessageFunction(false, messageKey, text, params));
+                    convertTemplateLiteral(false, path, globalMessages, newMessages);
                     isInjectIntlImportNeed = true;
                 },
                 JSXText(path) {
-                    if(handleJSXText(path, globalMessages, newMessages)) {
+                    if(convertJSXText(path, globalMessages, newMessages)) {
                         isFormattedMessageImportNeed = true;
                     }
                 },
@@ -213,24 +194,16 @@ function convert(componentPath, globalMessages, newMessages) {
 
             path.traverse({
                 StringLiteral(subPath) {
-                    if(handleStringLiteral(true, subPath, globalMessages, newMessages)) {
+                    if(convertStringLiteral(true, subPath, globalMessages, newMessages)) {
                         isUseIntlImportNeed = true;
                     }
                 },
                 TemplateLiteral(path) {
-                    const params = {};
-                    const quasis = path.node.quasis;
-                    const expressions = path.node.expressions;
-
-                    const text = createTemplateText(expressions, quasis, params);
-
-                    const messageKey = getOrCreateMessageKey(text, globalMessages, newMessages);
-
-                    path.replaceWith(intlFormatMessageFunction(true, messageKey, text, params));
+                    convertTemplateLiteral(true, path, globalMessages, newMessages);
                     isUseIntlImportNeed = true;
                 },
                 JSXText(path) {
-                    if(handleJSXText(path, globalMessages, newMessages)) {
+                    if(convertJSXText(path, globalMessages, newMessages)) {
                         isFormattedMessageImportNeed = true;
                     }
                 }
@@ -245,24 +218,16 @@ function convert(componentPath, globalMessages, newMessages) {
 
             path.traverse({
                 StringLiteral(subPath) {
-                    if(handleStringLiteral(true, subPath, globalMessages, newMessages)) {
+                    if(convertStringLiteral(true, subPath, globalMessages, newMessages)) {
                         isUseIntlImportNeed = true;
                     }
                 },
                 TemplateLiteral(path) {
-                    const params = {};
-                    const quasis = path.node.quasis;
-                    const expressions = path.node.expressions;
-
-                    const text = createTemplateText(expressions, quasis, params);
-
-                    const messageKey = getOrCreateMessageKey(text, globalMessages, newMessages);
-
-                    path.replaceWith(intlFormatMessageFunction(true, messageKey, text, params));
+                    convertTemplateLiteral(true, path, globalMessages, newMessages);
                     isUseIntlImportNeed = true;
                 },
                 JSXText(path) {
-                    if(handleJSXText(path, globalMessages, newMessages)) {
+                    if(convertJSXText(path, globalMessages, newMessages)) {
                         isFormattedMessageImportNeed = true;
                     }
                 }
@@ -277,24 +242,16 @@ function convert(componentPath, globalMessages, newMessages) {
 
             path.traverse({
                 StringLiteral(subPath) {
-                    if(handleStringLiteral(true, subPath, globalMessages, newMessages)) {
+                    if(convertStringLiteral(true, subPath, globalMessages, newMessages)) {
                         isUseIntlImportNeed = true;
                     }
                 },
                 TemplateLiteral(path) {
-                    const params = {};
-                    const quasis = path.node.quasis;
-                    const expressions = path.node.expressions;
-
-                    const text = createTemplateText(expressions, quasis, params);
-
-                    const messageKey = getOrCreateMessageKey(text, globalMessages, newMessages);
-
-                    path.replaceWith(intlFormatMessageFunction(true, messageKey, text, params));
+                    convertTemplateLiteral(true, path, globalMessages, newMessages);
                     isUseIntlImportNeed = true;
                 },
                 JSXText(path) {
-                    if(handleJSXText(path, globalMessages, newMessages)) {
+                    if(convertJSXText(path, globalMessages, newMessages)) {
                         isFormattedMessageImportNeed = true;
                     }
                 }

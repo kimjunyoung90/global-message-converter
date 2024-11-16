@@ -1,17 +1,16 @@
 import t from '@babel/types';
 import _ from 'lodash';
 
-export function intlFormatMessageFunction (
-    isFunctionComponent, messageKey, text, params = []) {
+export function intlFormatMessageFunction (isFunctionComponent, messageKey, text, params = []) {
     // JSX 표현식으로 변환
     const target = isFunctionComponent ? (
         t.identifier('intl')
     ) : (
         t.memberExpression(
             t.memberExpression(t.thisExpression(), t.identifier('props')),
-            t.identifier('intl')
+            t.identifier('intl'),
         )
-    )
+    );
     const intlFormatMessage =
         t.memberExpression(
             target,
@@ -110,25 +109,30 @@ export function importInjectIntl (path) {
 
 export function importIntlHook (node) {
     //import 확인
-    const importDeclarations = node.body.filter((node) => t.isImportDeclaration(node));
+    const importDeclarations = node.body.filter(
+        (node) => t.isImportDeclaration(node));
 
     //react-intl import
-    const reactIntlImport = importDeclarations.find((importDeclaration) => importDeclaration.source.value === 'react-intl');
+    const reactIntlImport = importDeclarations.find(
+        (importDeclaration) => importDeclaration.source.value === 'react-intl');
 
     //useIntl import
-    const hasInjectIntlImport = reactIntlImport?.specifiers.find(specifier => specifier.imported.name === 'useIntl');
+    const hasInjectIntlImport = reactIntlImport?.specifiers.find(
+        specifier => specifier.imported.name === 'useIntl');
     if (hasInjectIntlImport) return false;
 
-    const importInjectIntlSpecifier = t.importSpecifier(t.identifier('useIntl'), t.identifier('useIntl'));
+    const importInjectIntlSpecifier = t.importSpecifier(t.identifier('useIntl'),
+        t.identifier('useIntl'));
 
     if (reactIntlImport) {
         reactIntlImport.specifiers = [
             ...reactIntlImport.specifiers,
-            importInjectIntlSpecifier
+            importInjectIntlSpecifier,
         ];
     } else {
         const source = t.stringLiteral('react-intl');
-        const newImportDeclaration = t.importDeclaration([importInjectIntlSpecifier], source);
+        const newImportDeclaration = t.importDeclaration(
+            [importInjectIntlSpecifier], source);
         node.body = [
             ...importDeclarations,
             newImportDeclaration,
@@ -162,4 +166,25 @@ export function wrapExportWithInjectIntl (path) {
     if (isWrapped) return;
     exportDefault.declaration = t.callExpression(t.identifier('injectIntl'),
         [exportDefault.declaration]);
+}
+
+export function insertIntlHook (node) {
+    const blockStatement = node.body;
+    const variableDeclarations = blockStatement.body.filter(
+        node => t.isVariableDeclaration(node));
+    const variableDeclarators = variableDeclarations.filter(
+        variableDeclaration => variableDeclaration.declarations);
+    const intlInitialize = variableDeclarators.find(
+        variableDeclarator => t.isIdentifier(variableDeclarator.id) &&
+            (variableDeclarator.id.name === 'intl'));
+
+    if (_.isEmpty(intlInitialize)) {
+        const variableDeclarator = t.variableDeclarator(t.identifier('intl'),
+            t.callExpression(t.identifier('useIntl'), []));
+        const useIntlInitialization = t.variableDeclaration(
+            'const',
+            [variableDeclarator],
+        );
+        blockStatement.body.unshift(useIntlInitialization);
+    }
 }
