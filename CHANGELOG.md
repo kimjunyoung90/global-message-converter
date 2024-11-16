@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.6.1](https://github.com/kimjunyoung90/global-message-converter/compare/v1.6.0...v1.6.1) (2024-11-16)
+
+
+### Bug Fixes
+
+* 코드 파싱 에러 캐치 로직 추가 ([939c772](https://github.com/kimjunyoung90/global-message-converter/commit/939c7721827023c5f31d0bb9520feff5102f45bf))
+
 ## [1.6.0](https://github.com/kimjunyoung90/global-message-converter/compare/v1.5.1...v1.6.0) (2024-11-16)
 
 
