@@ -184,23 +184,11 @@ function convertFile(componentPath, globalMessages, newMessages) {
     traverse.default(ast, {
         ClassDeclaration(path) {
             path.traverse({
-                ClassMethod(path) {
-                    path.traverse({
-                        StringLiteral(subPath) {
-                            if(handleStringLiteral(false, subPath, globalMessages, newMessages)) {
-                                isInjectIntlImportNeed = true;
-                            }
-                        }
-                    });
-                },
-                ArrowFunctionExpression(path) {
-                    path.traverse({
-                        StringLiteral(subPath) {
-                            if(handleStringLiteral(false, subPath, globalMessages, newMessages)) {
-                                isInjectIntlImportNeed = true;
-                            }
-                        }
-                    });
+                StringLiteral(subPath) {
+                    if(t.isJSXAttribute(subPath.parent)) return;
+                    if(handleStringLiteral(false, subPath, globalMessages, newMessages)) {
+                        isInjectIntlImportNeed = false;
+                    }
                 },
                 TemplateLiteral(path) {
                     const params = {};
