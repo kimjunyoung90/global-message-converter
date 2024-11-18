@@ -19,7 +19,6 @@
 > <div><FormattedMessage id="greeting" defaultMessage="안녕하세요." /></div>
 > ```
 
-
 2. 일반 텍스트 변환
 > **Before:**
 > ```javascript

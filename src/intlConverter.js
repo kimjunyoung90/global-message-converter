@@ -50,6 +50,9 @@ function convertStringLiteral(isFunctionComponent, path, globalMessages, newMess
     return true;
 }
 
+const QUERY_STRING_REGEX = /\??([^=&]+)=[\s\S]+/;
+const isQueryString = (text) => QUERY_STRING_REGEX.test(text);
+
 function convertTemplateLiteral (isFunctionComponent, path, globalMessages, newMessages) {
     const params = {};
     const quasis = path.node.quasis;
@@ -87,6 +90,8 @@ function convertTemplateLiteral (isFunctionComponent, path, globalMessages, newM
     }
 
     if(!text) return false;
+
+    if(isQueryString(text)) return false;
 
     const messageKey = getOrCreateMessageKey(text, globalMessages, newMessages);
 
