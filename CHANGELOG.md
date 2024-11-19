@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.6.4](https://github.com/kimjunyoung90/global-message-converter/compare/v1.6.3...v1.6.4) (2024-11-19)
+
+
+### Bug Fixes
+
+* 템플릿 리터럴 변경 시 query string pattern 변환 하지 않도록 예외 처리 추가 ([df4a379](https://github.com/kimjunyoung90/global-message-converter/commit/df4a379ca5959607b8f1196c38e0c771858d1faf))
+
 ### [1.6.3](https://github.com/kimjunyoung90/global-message-converter/compare/v1.6.2...v1.6.3) (2024-11-16)
 
 
