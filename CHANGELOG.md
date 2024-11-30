@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.7.0](https://github.com/kimjunyoung90/global-message-converter/compare/v1.6.4...v1.7.0) (2024-11-30)
+
+
+### Features
+
+* jsx text 한국어 이외 언어 변경 기능 추가 ([4292708](https://github.com/kimjunyoung90/global-message-converter/commit/429270874cd294ef2c9196427fbda998cef49ac3))
+* 영어 대문자로 시작하지 않는 경우 string literal 변환 제외 처리 ([5e6a56c](https://github.com/kimjunyoung90/global-message-converter/commit/5e6a56c248d78208c738b952860f61946f4cba88))
+
 ### [1.6.4](https://github.com/kimjunyoung90/global-message-converter/compare/v1.6.3...v1.6.4) (2024-11-19)
 
 
