@@ -16,9 +16,6 @@ import {
     wrapExportWithInjectIntl,
 } from './intlHelpers.js';
 
-const KOREAN_REGEX = /[가-힣]/;
-const isKorean = (text) => KOREAN_REGEX.test(text);
-
 function getOrCreateMessageKey(text, globalMessages, newMessages) {
     let messageKey = Object.keys(globalMessages).find((key) => globalMessages[key] === text);
     if(!messageKey) {
@@ -34,8 +31,8 @@ function convertStringLiteral(isFunctionComponent, path, globalMessages, newMess
     const text = path.node.value.trim();
 
     //1. 변환 예외
-    //한국어 아닌 경우
-    if(!isKorean(text)) return false;
+    //영어 대문자 아닌경우
+    if(!/^[A-Z]/.test(text)) return false;
     //defaultMessage 속성
     if(path.parent?.key?.name === 'defaultMessage') return false;
     if(path.parent?.name?.name === 'defaultMessage') return false;
