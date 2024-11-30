@@ -106,8 +106,6 @@ function convertJSXText(path, globalMessages, newMessages) {
     //1. 변환 예외
     //공백
     if(!text) return false;
-    //한국어 아닌 경우
-    if(!isKorean(text)) return false;
 
     //2. 메시지 탐색 및 변환
     const messageKey = getOrCreateMessageKey(text, globalMessages, newMessages);
