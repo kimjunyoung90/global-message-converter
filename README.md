@@ -1,12 +1,10 @@
 # Global Message Converter
 `global-message-converter` is a command-line tool that detects hardcoded text within React applications and converts it to the format required by global messaging systems (react-intl). This library enables easy conversion of text.
-Currently, only Korean can be converted to other languages.
 
 **[CHANGELOG](./CHANGELOG.md)**: Check the latest update history here.
 
 #### Conversion Examples (Class and Functional Component Support)
 1. Text Conversion in JSX
-
 > **Before:**
 > ```javascript
 > <div>Hello.</div>
@@ -18,6 +16,7 @@ Currently, only Korean can be converted to other languages.
 > ```
 
 2. Plain Text Conversion
+- In this case, if the text is english converts only that starts with uppercase.
 > **Before:**
 > ```javascript
 > const hi = 'Hello.';
