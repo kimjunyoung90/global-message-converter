@@ -31,11 +31,16 @@ function convertStringLiteral(isFunctionComponent, path, globalMessages, newMess
     const text = path.node.value.trim();
 
     //1. 변환 예외
-    //영어 대문자 아닌경우
-    if(!/^[A-Z]/.test(text)) return false;
+    //공백
+    if(!text) return false;
+
+    //영어 소문자로 시작하는 경우
+    if(/^[a-z]/.test(text)) return false;
+
     //defaultMessage 속성
     if(path.parent?.key?.name === 'defaultMessage') return false;
     if(path.parent?.name?.name === 'defaultMessage') return false;
+
     //JSX 속성 값
     if(t.isJSXAttribute(path.container)) return false;
 
