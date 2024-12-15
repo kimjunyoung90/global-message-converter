@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.7.3](https://github.com/kimjunyoung90/global-message-converter/compare/v1.7.2...v1.7.3) (2024-12-15)
+
+
+### Bug Fixes
+
+* StringLiteral 탐지 시 영어 대문자로 시작되는 단어만 변경되는 조건 수정 ([8caa4e2](https://github.com/kimjunyoung90/global-message-converter/commit/8caa4e2fde4203ef1468a1c2860797fb220cad56))
+
 ### [1.7.2](https://github.com/kimjunyoung90/global-message-converter/compare/v1.7.1...v1.7.2) (2024-12-03)
 
 ### [1.7.1](https://github.com/kimjunyoung90/global-message-converter/compare/v1.7.0...v1.7.1) (2024-12-03)
