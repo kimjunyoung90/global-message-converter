@@ -1,6 +1,6 @@
 {
   "name": "global-message-converter",
-  "version": "1.7.3",
+  "version": "1.7.4",
   "description": "A converter that transforms hardcoded text into a format recognizable by internationalization library.",
   "main": "bin/index.js",
   "keywords": [
