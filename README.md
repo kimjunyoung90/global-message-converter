@@ -1,6 +1,8 @@
 # Global Message Converter
 `global-message-converter` is a command-line tool that detects hardcoded text within React applications and converts it to the format required by global messaging systems (react-intl). This library enables easy conversion of text.
 
+**Only Korean is converted.**  
+
 **[CHANGELOG](./CHANGELOG.md)**: Check the latest update history here.
 
 #### Conversion Examples (Class and Functional Component Support)
