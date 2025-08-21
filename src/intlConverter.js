@@ -48,6 +48,27 @@ function getOrCreateMessageKey(text, globalMessages, newMessages) {
     return messageKey;
 }
 
+function isConsoleCall(path) {
+    // CallExpression인지 확인하고 console 메소드 호출인지 체크
+    let currentPath = path;
+    
+    // 부모 경로를 따라 올라가면서 CallExpression 찾기
+    while (currentPath) {
+        if (t.isCallExpression(currentPath.parent)) {
+            const callee = currentPath.parent.callee;
+            
+            // console.log, console.error, console.warn 등 체크
+            if (t.isMemberExpression(callee) && 
+                t.isIdentifier(callee.object, { name: 'console' })) {
+                return true;
+            }
+        }
+        currentPath = currentPath.parentPath;
+    }
+    
+    return false;
+}
+
 function shouldSkipConversion(text, path) {
     // 1. 공백 체크
     if(!text) return true;
@@ -73,6 +94,11 @@ function shouldSkipConversion(text, path) {
         if (!CONVERSION_EXCEPTIONS.INCLUDED_JSX_ATTRIBUTES.includes(attributeName)) {
             return true;
         }
+    }
+
+    // 6. console 관련 텍스트 체크
+    if (isConsoleCall(path)) {
+        return true;
     }
 
     return false;
