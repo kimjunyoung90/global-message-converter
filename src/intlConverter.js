@@ -4,7 +4,6 @@ import generate from '@babel/generator';
 import t from '@babel/types';
 import fs from 'fs';
 import path from 'path';
-import _ from 'lodash';
 import { createNewMessageFile, loadMessages } from './messageUtils.js';
 import {
     formattedMessage,
@@ -149,7 +148,7 @@ function convertTemplateLiteral (isFunctionComponent, path, globalMessages, newM
                 }
             }
 
-            if(!_.isEmpty(paramKey)) {
+            if(paramKey && paramKey.trim() !== '') {
                 // 중복 변수명 처리
                 let uniqueParamKey = paramKey;
                 let counter = 1;
@@ -214,7 +213,7 @@ function isFunctionComponent (node) {
             }
 
             const returnStatement = node.body.body.find(node => t.isReturnStatement(node));
-            return !_.isEmpty(returnStatement);
+            return returnStatement !== undefined;
         }
         case 'VariableDeclarator' : {
             const init = node.init;
@@ -477,7 +476,7 @@ function intlConverter(inputPath, messageFilePath) {
     searchPathAndConvert(inputPath, globalMessages, newMessages);
 
     //변환된 컴포넌트 생성
-    if(!_.isEmpty(newMessages)) {
+    if(Object.keys(newMessages).length > 0) {
         createNewMessageFile(newMessages);
     }
 }

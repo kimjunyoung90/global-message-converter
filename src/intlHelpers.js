@@ -1,5 +1,4 @@
 import t from '@babel/types';
-import _ from 'lodash';
 
 export function intlFormatMessageFunction (isFunctionComponent, messageKey, text, params = [], isJSXAttribute = false) {
     // JSX 표현식으로 변환
@@ -26,7 +25,7 @@ export function intlFormatMessageFunction (isFunctionComponent, messageKey, text
         ]),
     ];
 
-    if (!_.isEmpty(params)) {
+    if (Object.keys(params).length > 0) {
         const objectProperties = Object.entries(params).
             map(([key, value]) => t.objectProperty(t.identifier(key), value));
         const argument = t.objectExpression(objectProperties);
@@ -185,7 +184,7 @@ export function insertIntlHook (node) {
         variableDeclarator => t.isIdentifier(variableDeclarator.id) &&
             (variableDeclarator.id.name === 'intl'));
 
-    if (_.isEmpty(intlInitialize)) {
+    if (!intlInitialize) {
         const variableDeclarator = t.variableDeclarator(t.identifier('intl'),
             t.callExpression(t.identifier('useIntl'), []));
         const useIntlInitialization = t.variableDeclaration(
