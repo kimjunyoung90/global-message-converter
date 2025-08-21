@@ -1,7 +1,7 @@
 import t from '@babel/types';
 import _ from 'lodash';
 
-export function intlFormatMessageFunction (isFunctionComponent, messageKey, text, params = []) {
+export function intlFormatMessageFunction (isFunctionComponent, messageKey, text, params = [], isJSXAttribute = false) {
     // JSX 표현식으로 변환
     const target = isFunctionComponent ? (
         t.identifier('intl')
@@ -33,7 +33,14 @@ export function intlFormatMessageFunction (isFunctionComponent, messageKey, text
         argumentsArray.push(argument);
     }
 
-    return t.callExpression(intlFormatMessage, argumentsArray);
+    const callExpression = t.callExpression(intlFormatMessage, argumentsArray);
+    
+    // JSX 속성인 경우 JSXExpressionContainer로 감싸기
+    if (isJSXAttribute) {
+        return t.jsxExpressionContainer(callExpression);
+    }
+    
+    return callExpression;
 }
 
 export function formattedMessage (key, text) {

@@ -22,9 +22,9 @@ const isKorean = (text) => KOREAN_REGEX.test(text);
 // 변환 예외 패턴들을 설정으로 관리
 const CONVERSION_EXCEPTIONS = {
     // 특정 속성명들
-    EXCLUDED_PROPERTY_NAMES: ['defaultMessage', 'id', 'className', 'style', 'src', 'href', 'alt', 'title'],
-    // 특정 JSX 속성들
-    EXCLUDED_JSX_ATTRIBUTES: true,
+    EXCLUDED_PROPERTY_NAMES: ['defaultMessage', 'id', 'className', 'style', 'src', 'href', 'alt', 'title', 'aria-label', 'placeholder', 'type', 'name', 'value'],
+    // JSX 속성 중 변환할 속성들 (화이트리스트)
+    INCLUDED_JSX_ATTRIBUTES: ['label'],
     // 특정 패턴들
     EXCLUDED_PATTERNS: [
         /^\s*$/, // 공백만
@@ -65,9 +65,13 @@ function shouldSkipConversion(text, path) {
         return true;
     }
 
-    // 5. JSX 속성 값 체크
-    if (CONVERSION_EXCEPTIONS.EXCLUDED_JSX_ATTRIBUTES && t.isJSXAttribute(path.container)) {
-        return true;
+    // 5. JSX 속성 값 체크 - 화이트리스트 방식으로 변경
+    if (t.isJSXAttribute(path.container)) {
+        const attributeName = path.container.name.name;
+        // 화이트리스트에 있는 속성만 변환 허용
+        if (!CONVERSION_EXCEPTIONS.INCLUDED_JSX_ATTRIBUTES.includes(attributeName)) {
+            return true;
+        }
     }
 
     return false;
@@ -81,8 +85,9 @@ function convertStringLiteral(isFunctionComponent, path, globalMessages, newMess
     //2. 메시지 탐색 및 생성
     const messageKey = getOrCreateMessageKey(text, globalMessages, newMessages);
 
-    //3. 변환
-    path.replaceWith(intlFormatMessageFunction(isFunctionComponent, messageKey, text));
+    //3. 변환 - JSX 속성인지 확인
+    const isJSXAttribute = t.isJSXAttribute(path.container);
+    path.replaceWith(intlFormatMessageFunction(isFunctionComponent, messageKey, text, [], isJSXAttribute));
     return true;
 }
 
