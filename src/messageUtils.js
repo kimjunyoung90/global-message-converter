@@ -31,9 +31,12 @@ export const loadMessages = async (filePath) => {
     }
 };
 
-export async function createNewMessageFile (newMessages) {
+export async function createNewMessageFile (newMessages, config = {}) {
     try {
-        let newMessageFileName = 'newMessages.json';
+        const outputPattern = config?.output?.newMessageFilePattern || 'newMessages.json';
+        const outputFormat = config?.files?.outputFormat || 'pretty';
+        
+        let newMessageFileName = outputPattern;
         let counter = 1;
         while (existsSync(newMessageFileName)) {
             const parsed = path.parse(newMessageFileName);
@@ -42,11 +45,13 @@ export async function createNewMessageFile (newMessages) {
             counter++;
         }
         
-        await fs.writeFile(newMessageFileName, JSON.stringify(newMessages, null, 2), 'utf-8');
-        console.log(`새 메시지 파일 생성: ${newMessageFileName}`);
+        const jsonContent = outputFormat === 'compact' 
+            ? JSON.stringify(newMessages)
+            : JSON.stringify(newMessages, null, 2);
+            
+        await fs.writeFile(newMessageFileName, jsonContent, 'utf-8');
         return newMessageFileName;
     } catch (error) {
-        console.error(`메시지 파일 생성 실패: ${error.message}`);
-        throw error;
+        throw new Error(`메시지 파일 생성 실패: ${error.message}`);
     }
 }

@@ -6,6 +6,7 @@ import fs from 'fs/promises';
 import { existsSync, statSync, readdirSync } from 'fs';
 import path from 'path';
 import { createNewMessageFile, loadMessages } from './messageUtils.js';
+import logger from './logger.js';
 import {
     formattedMessage,
     importFormattedMessage,
@@ -19,24 +20,25 @@ import {
 const KOREAN_REGEX = /[가-힣]/;
 const isKorean = (text) => KOREAN_REGEX.test(text);
 
-// 변환 예외 패턴들을 설정으로 관리
-const CONVERSION_EXCEPTIONS = {
-    // 특정 속성명들 (React Intl 관련 및 스타일 속성 제외)
-    EXCLUDED_PROPERTY_NAMES: ['defaultMessage', 'id', 'fontFamily', 'className', 'style'],
-    // JSX 속성 중 변환할 속성들 (화이트리스트)
-    INCLUDED_JSX_ATTRIBUTES: ['label', 'placeholder', 'title', 'alt', 'aria-label'],
-    // 특정 패턴들
-    EXCLUDED_PATTERNS: [
-        /^\s*$/, // 공백만
-        /^[a-zA-Z0-9_-]+$/, // 영문+숫자+기호만
-        /^https?:\/\//, // URL
-        /^\/[a-zA-Z0-9/_-]*/, // 경로
-        /^\d+(\.\d+)?$/, // 숫자만
-        /^#[a-fA-F0-9]{3,6}$/, // 색상코드
-        /^[^\w가-힣]+$/, // 특수문자만 (한국어, 영문, 숫자가 아닌 문자들만)
-        /^.*(고딕|명조|돋움|바탕|Arial|Times|Helvetica|sans-serif|serif|monospace).*$/i, // 글꼴 이름 패턴
-    ]
-};
+// 설정에서 변환 예외 패턴 가져오기
+function getConversionExceptions(config) {
+    const conversion = config?.conversion || {};
+    
+    return {
+        EXCLUDED_PROPERTY_NAMES: conversion.excludedPropertyNames || ['defaultMessage', 'id', 'fontFamily', 'className', 'style'],
+        INCLUDED_JSX_ATTRIBUTES: conversion.includedJSXAttributes || ['label', 'placeholder', 'title', 'alt', 'aria-label'],
+        EXCLUDED_PATTERNS: (conversion.excludedPatterns || [
+            '^\\s*$',
+            '^[a-zA-Z0-9_-]+$',
+            '^https?:\\/\\/',
+            '^\\/[a-zA-Z0-9/_-]*',
+            '^\\d+(\\.\\d+)?$',
+            '^#[a-fA-F0-9]{3,6}$',
+            '^[^\\w가-힣]+$',
+            '^.*(고딕|명조|돋움|바탕|Arial|Times|Helvetica|sans-serif|serif|monospace).*$'
+        ]).map(pattern => new RegExp(pattern, 'i'))
+    };
+}
 
 function getOrCreateMessageKey(text, globalMessages, newMessages) {
     let messageKey = Object.keys(globalMessages).find((key) => globalMessages[key] === text);
@@ -70,7 +72,7 @@ function isConsoleCall(path) {
     return false;
 }
 
-function shouldSkipConversion(text, path) {
+function shouldSkipConversion(text, path, exceptions) {
     // 1. 공백 체크
     if(!text) return true;
 
@@ -78,13 +80,13 @@ function shouldSkipConversion(text, path) {
     if(!isKorean(text)) return true;
 
     // 3. 예외 패턴 체크
-    for (const pattern of CONVERSION_EXCEPTIONS.EXCLUDED_PATTERNS) {
+    for (const pattern of exceptions.EXCLUDED_PATTERNS) {
         if (pattern.test(text)) return true;
     }
 
     // 4. 특정 속성명 체크
     const propertyName = path.parent?.key?.name || path.parent?.name?.name;
-    if (propertyName && CONVERSION_EXCEPTIONS.EXCLUDED_PROPERTY_NAMES.includes(propertyName)) {
+    if (propertyName && exceptions.EXCLUDED_PROPERTY_NAMES.includes(propertyName)) {
         return true;
     }
 
@@ -92,7 +94,7 @@ function shouldSkipConversion(text, path) {
     if (t.isJSXAttribute(path.container)) {
         const attributeName = path.container.name.name;
         // 화이트리스트에 있는 속성만 변환 허용
-        if (!CONVERSION_EXCEPTIONS.INCLUDED_JSX_ATTRIBUTES.includes(attributeName)) {
+        if (!exceptions.INCLUDED_JSX_ATTRIBUTES.includes(attributeName)) {
             return true;
         }
     }
@@ -105,10 +107,10 @@ function shouldSkipConversion(text, path) {
     return false;
 }
 
-function convertStringLiteral(isFunctionComponent, path, globalMessages, newMessages) {
+function convertStringLiteral(isFunctionComponent, path, globalMessages, newMessages, exceptions) {
     const text = path.node.value.trim();
 
-    if (shouldSkipConversion(text, path)) return false;
+    if (shouldSkipConversion(text, path, exceptions)) return false;
 
     //2. 메시지 탐색 및 생성
     const messageKey = getOrCreateMessageKey(text, globalMessages, newMessages);
@@ -122,7 +124,7 @@ function convertStringLiteral(isFunctionComponent, path, globalMessages, newMess
 const QUERY_STRING_REGEX = /\??([^=&]+)=[\s\S]+/;
 const isQueryString = (text) => QUERY_STRING_REGEX.test(text);
 
-function convertTemplateLiteral (isFunctionComponent, path, globalMessages, newMessages) {
+function convertTemplateLiteral (isFunctionComponent, path, globalMessages, newMessages, exceptions) {
     const params = {};
     const quasis = path.node.quasis;
     const expressions = path.node.expressions;
@@ -180,7 +182,7 @@ function convertTemplateLiteral (isFunctionComponent, path, globalMessages, newM
         text += quasis[quasis.length - 1].value.cooked;
     }
 
-    if (shouldSkipConversion(text, path) || isQueryString(text)) {
+    if (shouldSkipConversion(text, path, exceptions) || isQueryString(text)) {
         return false;
     }
 
@@ -191,11 +193,11 @@ function convertTemplateLiteral (isFunctionComponent, path, globalMessages, newM
     return true;
 }
 
-function convertJSXText(path, globalMessages, newMessages) {
+function convertJSXText(path, globalMessages, newMessages, exceptions) {
     const text = path.node.value.trim();
 
     //1. 변환 예외 - shouldSkipConversion 함수 사용
-    if (shouldSkipConversion(text, path)) return false;
+    if (shouldSkipConversion(text, path, exceptions)) return false;
 
     //2. 메시지 탐색 및 변환
     const messageKey = getOrCreateMessageKey(text, globalMessages, newMessages);
@@ -255,202 +257,205 @@ function isFunctionComponent (node) {
 
 }
 
-async function convert(componentPath, globalMessages, newMessages) {
+async function convert(componentPath, globalMessages, newMessages, config) {
     try {
         const code = await fs.readFile(componentPath, 'utf8');
+        const exceptions = getConversionExceptions(config);
 
-    let isFormattedMessageImportNeed = false;
-    let isInjectIntlImportNeed = false;
-    let isIntlHookNeed = false;
+        let isFormattedMessageImportNeed = false;
+        let isInjectIntlImportNeed = false;
+        let isIntlHookNeed = false;
 
-    //code ast 변환
-    let ast;
-    try {
-        // code ast 변환
-        ast = parser.parse(code, {
-            sourceType: 'module',
-            plugins: ['jsx'],
-        });
-    } catch (error) {
-        console.error(`구문 분석 오류: ${componentPath} - ${error.message}`);
-        return; // 구문 분석에 실패한 경우 변환을 중단
-    }
-
-    const visitor = {
-        ClassDeclaration(path) {
-            path.traverse({
-                StringLiteral(subPath) {
-                    if(convertStringLiteral(false, subPath, globalMessages, newMessages)) {
-                        isInjectIntlImportNeed = true;
-                    }
-                },
-                TemplateLiteral(path) {
-                    if(convertTemplateLiteral(false, path, globalMessages, newMessages)) {
-                        isInjectIntlImportNeed = true;
-                    }
-                },
-                JSXText(path) {
-                    if(convertJSXText(path, globalMessages, newMessages)) {
-                        isFormattedMessageImportNeed = true;
-                    }
-                },
+        //code ast 변환
+        let ast;
+        try {
+            // code ast 변환
+            ast = parser.parse(code, {
+                sourceType: 'module',
+                plugins: ['jsx'],
             });
-        },
-        FunctionDeclaration(path) {
-            if(!isFunctionComponent(path.node)) return;
+        } catch (error) {
+            logger.error(`구문 분석 오류: ${componentPath} - ${error.message}`);
+            return; // 구문 분석에 실패한 경우 변환을 중단
+        }
 
-            path.traverse({
-                StringLiteral(subPath) {
-                    if(convertStringLiteral(true, subPath, globalMessages, newMessages)) {
-                        isIntlHookNeed = true;
-                    }
-                },
-                TemplateLiteral(path) {
-                    if(convertTemplateLiteral(true, path, globalMessages, newMessages)) {
-                        isIntlHookNeed = true;
-                    }
-                },
-                JSXText(path) {
-                    if(convertJSXText(path, globalMessages, newMessages)) {
-                        isFormattedMessageImportNeed = true;
-                    }
-                }
-            });
+        const visitor = {
+            ClassDeclaration(path) {
+                path.traverse({
+                    StringLiteral(subPath) {
+                        if(convertStringLiteral(false, subPath, globalMessages, newMessages, exceptions)) {
+                            isInjectIntlImportNeed = true;
+                        }
+                    },
+                    TemplateLiteral(path) {
+                        if(convertTemplateLiteral(false, path, globalMessages, newMessages, exceptions)) {
+                            isInjectIntlImportNeed = true;
+                        }
+                    },
+                    JSXText(path) {
+                        if(convertJSXText(path, globalMessages, newMessages, exceptions)) {
+                            isFormattedMessageImportNeed = true;
+                        }
+                    },
+                });
+            },
+            FunctionDeclaration(path) {
+                if(!isFunctionComponent(path.node)) return;
 
-            if(isIntlHookNeed) {
-                insertIntlHook(path.node);
-            }
-        },
-        VariableDeclarator(path) {
-            if(!isFunctionComponent(path.node)) return;
-
-            path.traverse({
-                StringLiteral(subPath) {
-                    if(convertStringLiteral(true, subPath, globalMessages, newMessages)) {
-                        isIntlHookNeed = true;
+                path.traverse({
+                    StringLiteral(subPath) {
+                        if(convertStringLiteral(true, subPath, globalMessages, newMessages, exceptions)) {
+                            isIntlHookNeed = true;
+                        }
+                    },
+                    TemplateLiteral(path) {
+                        if(convertTemplateLiteral(true, path, globalMessages, newMessages, exceptions)) {
+                            isIntlHookNeed = true;
+                        }
+                    },
+                    JSXText(path) {
+                        if(convertJSXText(path, globalMessages, newMessages, exceptions)) {
+                            isFormattedMessageImportNeed = true;
+                        }
                     }
-                },
-                TemplateLiteral(path) {
-                    if(convertTemplateLiteral(true, path, globalMessages, newMessages)) {
-                        isIntlHookNeed = true;
-                    }
-                },
-                JSXText(path) {
-                    if(convertJSXText(path, globalMessages, newMessages)) {
-                        isFormattedMessageImportNeed = true;
-                    }
-                }
-            });
-
-            if(isIntlHookNeed) {
-                insertIntlHook(path.node.init);
-            }
-        },
-        ExportDefaultDeclaration(path) {
-            if(!isFunctionComponent(path.node)) return;
-
-            path.traverse({
-                StringLiteral(subPath) {
-                    if(convertStringLiteral(true, subPath, globalMessages, newMessages)) {
-                        isIntlHookNeed = true;
-                    }
-                },
-                TemplateLiteral(path) {
-                    if(convertTemplateLiteral(true, path, globalMessages, newMessages)) {
-                        isIntlHookNeed = true;
-                    }
-                },
-                JSXText(path) {
-                    if(convertJSXText(path, globalMessages, newMessages)) {
-                        isFormattedMessageImportNeed = true;
-                    }
-                }
-            });
-
-            if(isIntlHookNeed) {
-                insertIntlHook(path.node.declaration);
-            }
-        },
-        Program: {
-            exit(path) {
-
-                if(isFormattedMessageImportNeed) {
-                    importFormattedMessage(path);
-                }
+                });
 
                 if(isIntlHookNeed) {
-                    importIntlHook(path.node);
-                }
-
-                if(isInjectIntlImportNeed) {
-                    importInjectIntl(path);
-                    wrapExportWithInjectIntl(path);
+                    insertIntlHook(path.node);
                 }
             },
-        },
-    };
+            VariableDeclarator(path) {
+                if(!isFunctionComponent(path.node)) return;
 
-    try {
-        traverse.default(ast, visitor);
-    } catch (error) {
-        console.error(`변환 오류: ${componentPath} - ${error.message}`);
-        return; // 변환 도중 에러 발생한 경우 변환 중단
-    }
+                path.traverse({
+                    StringLiteral(subPath) {
+                        if(convertStringLiteral(true, subPath, globalMessages, newMessages, exceptions)) {
+                            isIntlHookNeed = true;
+                        }
+                    },
+                    TemplateLiteral(path) {
+                        if(convertTemplateLiteral(true, path, globalMessages, newMessages, exceptions)) {
+                            isIntlHookNeed = true;
+                        }
+                    },
+                    JSXText(path) {
+                        if(convertJSXText(path, globalMessages, newMessages, exceptions)) {
+                            isFormattedMessageImportNeed = true;
+                        }
+                    }
+                });
 
-    const {code: result} = generate.default(ast, {
-        comments: true,
-        compact: false,      // 읽기 좋은 형태로 출력
-        retainLines: true,   // 기존 라인 번호 최대한 유지
-        concise: false,      // 간결하게 하지 않음
-        minified: false,     // 최소화하지 않음
-        jsescOption: {
-            minimal: true,   // ASCII로 변환하지 않음
-        },
-    });
+                if(isIntlHookNeed) {
+                    insertIntlHook(path.node.init);
+                }
+            },
+            ExportDefaultDeclaration(path) {
+                if(!isFunctionComponent(path.node)) return;
+
+                path.traverse({
+                    StringLiteral(subPath) {
+                        if(convertStringLiteral(true, subPath, globalMessages, newMessages, exceptions)) {
+                            isIntlHookNeed = true;
+                        }
+                    },
+                    TemplateLiteral(path) {
+                        if(convertTemplateLiteral(true, path, globalMessages, newMessages, exceptions)) {
+                            isIntlHookNeed = true;
+                        }
+                    },
+                    JSXText(path) {
+                        if(convertJSXText(path, globalMessages, newMessages, exceptions)) {
+                            isFormattedMessageImportNeed = true;
+                        }
+                    }
+                });
+
+                if(isIntlHookNeed) {
+                    insertIntlHook(path.node.declaration);
+                }
+            },
+            Program: {
+                exit(path) {
+
+                    if(isFormattedMessageImportNeed) {
+                        importFormattedMessage(path);
+                    }
+
+                    if(isIntlHookNeed) {
+                        importIntlHook(path.node);
+                    }
+
+                    if(isInjectIntlImportNeed) {
+                        importInjectIntl(path);
+                        wrapExportWithInjectIntl(path);
+                    }
+                },
+            },
+        };
+
+        try {
+            traverse.default(ast, visitor);
+        } catch (error) {
+            logger.error(`변환 오류: ${componentPath} - ${error.message}`);
+            return; // 변환 도중 에러 발생한 경우 변환 중단
+        }
+
+        const {code: result} = generate.default(ast, {
+            comments: true,
+            compact: false,      // 읽기 좋은 형태로 출력
+            retainLines: true,   // 기존 라인 번호 최대한 유지
+            concise: false,      // 간결하게 하지 않음
+            minified: false,     // 최소화하지 않음
+            jsescOption: {
+                minimal: true,   // ASCII로 변환하지 않음
+            },
+        });
 
         //다국어 메시지 적용 파일 생성
         if (result) {
             await fs.writeFile(componentPath, result, 'utf8');
-            console.log(`${componentPath} 변환`);
+            logger.success(`${componentPath} 변환`);
         }
     } catch (error) {
-        console.error(`파일 처리 오류: ${componentPath} - ${error.message}`);
+        logger.error(`파일 처리 오류: ${componentPath} - ${error.message}`);
         throw error;
     }
 }
 
-// 지원하는 파일 확장자 목록
-const SUPPORTED_EXTENSIONS = ['.js', '.jsx', '.ts', '.tsx'];
-
-function isValidFile(filePath) {
+function isValidFile(filePath, config) {
     const ext = path.extname(filePath);
-    return SUPPORTED_EXTENSIONS.includes(ext);
+    const supportedExtensions = config?.files?.supportedExtensions || ['.js', '.jsx', '.ts', '.tsx'];
+    return supportedExtensions.includes(ext);
 }
 
-function shouldSkipDirectory(dirName) {
+function shouldSkipDirectory(dirName, config) {
     // 숨김 디렉토리 및 특정 디렉토리 제외
-    const excludedDirs = ['node_modules', '.git', '.next', 'dist', 'build', 'coverage', '.nyc_output'];
+    const excludedDirs = config?.files?.excludedDirectories || ['node_modules', '.git', '.next', 'dist', 'build', 'coverage', '.nyc_output'];
     return dirName.startsWith('.') || excludedDirs.includes(dirName);
 }
 
-async function searchPathAndConvert(inputPath, globalMessages, newMessages) {
+async function searchPathAndConvert(inputPath, globalMessages, newMessages, config, stats = { processed: 0, total: 0 }) {
     try {
         if (!existsSync(inputPath)) {
-            console.error(`${inputPath} 파일(폴더)를 찾을 수 없습니다.`);
+            logger.error(`${inputPath} 파일(폴더)를 찾을 수 없습니다.`);
             return;
         }
 
-        const stats = statSync(inputPath);
-        if (stats.isFile()) {
-            if (isValidFile(inputPath)) {
-                await convert(inputPath, globalMessages, newMessages);
+        const fileStats = statSync(inputPath);
+        if (fileStats.isFile()) {
+            if (isValidFile(inputPath, config)) {
+                if (config?.logging?.progress) {
+                    stats.processed++;
+                    logger.progress(stats.processed, stats.total, path.basename(inputPath));
+                }
+                await convert(inputPath, globalMessages, newMessages, config);
             } else {
-                console.log(`지원하지 않는 파일 형식: ${inputPath}`);
+                logger.debug(`지원하지 않는 파일 형식: ${inputPath}`);
             }
-        } else if (stats.isDirectory()) {
+        } else if (fileStats.isDirectory()) {
             const dirName = path.basename(inputPath);
-            if (shouldSkipDirectory(dirName)) {
-                console.log(`디렉토리 건너뜀: ${inputPath}`);
+            if (shouldSkipDirectory(dirName, config)) {
+                logger.debug(`디렉토리 건너뜀: ${inputPath}`);
                 return;
             }
 
@@ -458,40 +463,82 @@ async function searchPathAndConvert(inputPath, globalMessages, newMessages) {
             // 병렬 처리를 위해 Promise.all 사용
             await Promise.all(files.map(async file => {
                 const fullPath = path.join(inputPath, file);
-                await searchPathAndConvert(fullPath, globalMessages, newMessages);
+                await searchPathAndConvert(fullPath, globalMessages, newMessages, config, stats);
             }));
         } else {
-            console.error(`${inputPath} 파일 및 폴더가 아닙니다.`);
+            logger.error(`${inputPath} 파일 및 폴더가 아닙니다.`);
         }
     } catch (error) {
-        console.error(`경로 처리 오류: ${inputPath} - ${error.message}`);
+        logger.error(`경로 처리 오류: ${inputPath} - ${error.message}`);
         throw error;
     }
 }
 
-async function intlConverter(inputPath, messageFilePath) {
+// 파일 개수 카운트 함수
+function countFiles(inputPath, config) {
+    let count = 0;
+    
+    function countRecursive(currentPath) {
+        if (!existsSync(currentPath)) return;
+        
+        const stats = statSync(currentPath);
+        if (stats.isFile()) {
+            if (isValidFile(currentPath, config)) {
+                count++;
+            }
+        } else if (stats.isDirectory()) {
+            const dirName = path.basename(currentPath);
+            if (!shouldSkipDirectory(dirName, config)) {
+                const files = readdirSync(currentPath);
+                files.forEach(file => {
+                    countRecursive(path.join(currentPath, file));
+                });
+            }
+        }
+    }
+    
+    countRecursive(inputPath);
+    return count;
+}
+
+async function intlConverter(inputPath, messageFilePath, config = {}) {
     try {
         if (!existsSync(messageFilePath)) {
-            console.error(`${messageFilePath} 메시지 파일을 찾을 수 없습니다.`);
+            logger.error(`${messageFilePath} 메시지 파일을 찾을 수 없습니다.`);
             return;
         }
+        
+        logger.info('변환 시작...');
         
         //메시지 파일 로드
         const globalMessages = await loadMessages(messageFilePath);
         const newMessages = {};
+        
+        // 파일 개수 카운트 (진행률 표시용)
+        const totalFiles = config?.logging?.progress ? countFiles(inputPath, config) : 0;
+        const stats = { processed: 0, total: totalFiles };
+        
+        if (totalFiles > 0) {
+            logger.info(`처리할 파일: ${totalFiles}개`);
+        }
 
         //변환
-        await searchPathAndConvert(inputPath, globalMessages, newMessages);
+        await searchPathAndConvert(inputPath, globalMessages, newMessages, config, stats);
 
         //변환된 컴포넌트 생성
         if(Object.keys(newMessages).length > 0) {
-            const newMessageFile = await createNewMessageFile(newMessages);
-            console.log(`변환 완료! 새 메시지: ${Object.keys(newMessages).length}개`);
+            const newMessageFile = await createNewMessageFile(newMessages, config);
+            logger.success(`변환 완료! 새 메시지: ${Object.keys(newMessages).length}개`);
+            
+            if (config?.output?.showStatistics) {
+                logger.info(`새 메시지 파일: ${newMessageFile}`);
+                logger.info(`처리된 파일: ${stats.processed}개`);
+            }
         } else {
-            console.log('변환할 새로운 메시지가 없습니다.');
+            logger.info('변환할 새로운 메시지가 없습니다.');
         }
     } catch (error) {
-        console.error(`변환 프로세스 오류: ${error.message}`);
+        logger.error(`변환 프로세스 오류: ${error.message}`);
         process.exit(1);
     }
 }

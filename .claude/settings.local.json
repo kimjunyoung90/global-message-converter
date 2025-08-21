@@ -15,7 +15,9 @@
       "Bash(npm uninstall:*)",
       "Bash(rm:*)",
       "Bash(git reset:*)",
-      "Bash(npm audit:*)"
+      "Bash(npm audit:*)",
+      "Bash(mv:*)",
+      "Bash(gmc config:*)"
     ],
     "deny": [],
     "ask": []

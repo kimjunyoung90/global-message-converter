@@ -59,6 +59,11 @@ gmc convert -t <대상경로> -m <메시지파일>
 |------|------|------|
 | `-t, --target` | 변환 대상 파일 또는 폴더 경로 | ✅ |
 | `-m, --message` | 기존 메시지 파일 경로 (JSON/JS) | ✅ |
+| `-c, --config` | 설정 파일 경로 | ❌ |
+| `-v, --verbose` | 상세 로그 출력 | ❌ |
+| `-q, --quiet` | 조용한 모드 (오류만 출력) | ❌ |
+| `--no-colors` | 색상 출력 비활성화 | ❌ |
+| `--no-progress` | 진행률 표시 비활성화 | ❌ |
 
 ### 사용 예시
 
@@ -68,7 +73,35 @@ gmc convert -t ./src/components/Header.jsx -m ./messages/ko.js
 
 # 폴더 전체 변환
 gmc convert -t ./src/components -m ./messages/ko.js
+
+# 상세 로그와 함께 변환
+gmc convert -t ./src -m ./messages/ko.js --verbose
+
+# 설정 파일 사용
+gmc convert -t ./src -m ./messages/ko.js --config .gmcrc.json
 ```
+
+## 설정
+
+프로젝트의 변환 동작을 세밀하게 제어할 수 있습니다.
+
+### 설정 파일 생성
+```bash
+gmc config --init
+```
+
+이 명령어는 `.gmcrc.json` 파일을 생성하여 기본 설정을 제공합니다.
+
+### 설정 관리 명령어
+```bash
+# 현재 설정 확인
+gmc config --show
+
+# 설정 검증
+gmc config --validate
+```
+
+자세한 설정 옵션은 [설정 가이드](docs/CONFIGURATION.md)를 참조하세요.
 
 ## 메시지 파일 형식
 
