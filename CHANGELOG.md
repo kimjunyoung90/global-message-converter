@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.13.0](https://github.com/kimjunyoung90/global-message-converter/compare/v1.12.0...v1.13.0) (2025-08-21)
+
+
+### Features
+
+* 글꼴 관련 속성 및 패턴 변환 방지 기능 추가 ([d7cded1](https://github.com/kimjunyoung90/global-message-converter/commit/d7cded102bc10e15346b4c8c47286f9626db62ee))
+
 ## [1.12.0](https://github.com/kimjunyoung90/global-message-converter/compare/v1.11.0...v1.12.0) (2025-08-21)
 
 
