@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.10.0](https://github.com/kimjunyoung90/global-message-converter/compare/v1.9.0...v1.10.0) (2025-08-21)
+
+
+### Features
+
+* JSX 속성 변환 지원 확장 및 속성 제한 완화 ([4cbcdab](https://github.com/kimjunyoung90/global-message-converter/commit/4cbcdab2d639fcd0621a88d3f503cd3b9d50f76e))
+
 ## [1.9.0](https://github.com/kimjunyoung90/global-message-converter/compare/v1.8.2...v1.9.0) (2025-08-21)
 
 
