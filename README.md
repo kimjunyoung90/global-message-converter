@@ -30,7 +30,8 @@ gmc convert -t ./src -m ./messages/ko.js
 **변환 전:**
 ```javascript
 function Welcome() {
-    return <div>안녕하세요, {name}님!</div>;
+    const message = "안녕하세요!";
+    return <div>환영합니다</div>;
 }
 ```
 
@@ -40,7 +41,8 @@ import { FormattedMessage, useIntl } from "react-intl";
 
 function Welcome() {
     const intl = useIntl();
-    return <div><FormattedMessage id="greeting" defaultMessage="안녕하세요, {name}님!" values={{ name }} /></div>;
+    const message = intl.formatMessage({ id: "new.message.1", defaultMessage: "안녕하세요!" });
+    return <div><FormattedMessage id="new.message.2" defaultMessage="환영합니다" /></div>;
 }
 ```
 
