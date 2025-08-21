@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.13.2](https://github.com/kimjunyoung90/global-message-converter/compare/v1.13.1...v1.13.2) (2025-08-21)
+
+
+### Bug Fixes
+
+* README 변환 예시를 실제 변환 결과에 맞게 수정 ([f188fac](https://github.com/kimjunyoung90/global-message-converter/commit/f188facfaa3b64024c4de6adbf736a26a2681d45))
+
 ### [1.13.1](https://github.com/kimjunyoung90/global-message-converter/compare/v1.13.0...v1.13.1) (2025-08-21)
 
 ## [1.13.0](https://github.com/kimjunyoung90/global-message-converter/compare/v1.12.0...v1.13.0) (2025-08-21)
