@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.9.0](https://github.com/kimjunyoung90/global-message-converter/compare/v1.8.2...v1.9.0) (2025-08-21)
+
+
+### Features
+
+* JSX placeholder 속성 변환 및 특수문자만 텍스트 제외 기능 추가 ([7d2171c](https://github.com/kimjunyoung90/global-message-converter/commit/7d2171ce778ba2c5c670dc47287b5c23ead39c97))
+
 ### [1.8.2](https://github.com/kimjunyoung90/global-message-converter/compare/v1.8.1...v1.8.2) (2025-08-21)
 
 ### [1.8.1](https://github.com/kimjunyoung90/global-message-converter/compare/v1.8.0...v1.8.1) (2025-08-21)
