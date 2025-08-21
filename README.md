@@ -25,7 +25,7 @@ React 애플리케이션의 **하드코딩된 한국어 텍스트**를 자동으
 - 🎛️ **스마트 변환**: String Literal, Template Literal, JSX Text 모두 지원
 - 🔧 **컴포넌트 자동 처리**: 함수형/클래스형 컴포넌트 자동 감지 및 적절한 변환
 - 📝 **메시지 관리**: 기존 메시지와 매칭하거나 새 메시지 자동 생성
-- 🎨 **JSX 속성 지원**: `label` 속성 선택적 변환 지원
+- 🎨 **JSX 속성 지원**: `label`, `placeholder`, `title`, `alt`, `aria-label` 속성 변환 지원
 - ⚙️ **설정 가능**: 변환 예외 패턴 및 제외 속성 커스터마이징
 
 ## 🎯 변환 예시
@@ -60,6 +60,17 @@ React 애플리케이션의 **하드코딩된 한국어 텍스트**를 자동으
 > **변환 후:**
 > ```javascript
 > const error = intl.formatMessage({ id: 'error.message', defaultMessage: '{error} 오류가 발생했습니다' }, { error });
+> ```
+
+4. JSX 속성 변환
+> **변환 전:**
+> ```javascript
+> <input placeholder="이름을 입력하세요" title="입력 필드" />
+> ```
+
+> **변환 후:**
+> ```javascript
+> <input placeholder={intl.formatMessage({ id: 'input.placeholder', defaultMessage: '이름을 입력하세요' })} title={intl.formatMessage({ id: 'input.title', defaultMessage: '입력 필드' })} />
 > ```
 
 ## ⚡ 빠른 시작
@@ -158,9 +169,10 @@ A: JSX 플러그인 오류일 가능성이 있습니다.
 **Q: 일부 한국어 텍스트가 변환되지 않아요**
 ```
 A: 다음과 같은 경우 변환되지 않습니다:
-   - JSX 속성 중 label을 제외한 모든 속성 (className, style 등)
-   - URL, 경로, 숫자, 색상코드 등의 특정 패턴
-   - defaultMessage 속성값
+   - JSX 속성 중 지원하지 않는 속성 (className, style, data-* 등)
+   - 지원되는 JSX 속성: label, placeholder, title, alt, aria-label
+   - URL, 경로, 숫자, 색상코드, 특수문자만 포함된 텍스트
+   - defaultMessage, id 속성값
 ```
 
 **Q: 메시지 파일을 찾을 수 없다고 해요**
