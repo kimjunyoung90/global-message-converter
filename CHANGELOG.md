@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.12.0](https://github.com/kimjunyoung90/global-message-converter/compare/v1.11.0...v1.12.0) (2025-08-21)
+
+
+### Features
+
+* console 함수 호출 내 텍스트 변환 방지 기능 추가 ([ed07760](https://github.com/kimjunyoung90/global-message-converter/commit/ed077601895c57a0c262b9393c3010c8a95215f1))
+
 ## [1.11.0](https://github.com/kimjunyoung90/global-message-converter/compare/v1.10.0...v1.11.0) (2025-08-21)
 
 
