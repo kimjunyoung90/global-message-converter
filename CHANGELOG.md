@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.15.2](https://github.com/kimjunyoung90/global-message-converter/compare/v1.15.1...v1.15.2) (2025-08-21)
+
 ### [1.15.1](https://github.com/kimjunyoung90/global-message-converter/compare/v1.15.0...v1.15.1) (2025-08-21)
 
 
