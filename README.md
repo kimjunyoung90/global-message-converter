@@ -101,7 +101,7 @@ gmc config --show
 gmc config --validate
 ```
 
-자세한 설정 옵션은 [설정 가이드](docs/CONFIGURATION.md)를 참조하세요.
+자세한 설정 옵션은 [설정 가이드](https://github.com/kimjunyoung90/global-message-converter/blob/main/docs/CONFIGURATION.md)를 참조하세요.
 
 ## 메시지 파일 형식
 
