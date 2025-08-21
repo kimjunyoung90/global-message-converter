@@ -371,8 +371,12 @@ function convert(componentPath, globalMessages, newMessages) {
 
     const {code: result} = generate.default(ast, {
         comments: true,
+        compact: false,      // 읽기 좋은 형태로 출력
+        retainLines: true,   // 기존 라인 번호 최대한 유지
+        concise: false,      // 간결하게 하지 않음
+        minified: false,     // 최소화하지 않음
         jsescOption: {
-            minimal: true, // ASCII로 변환하지 않음
+            minimal: true,   // ASCII로 변환하지 않음
         },
     });
 
