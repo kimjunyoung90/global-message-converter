@@ -21,8 +21,8 @@ const isKorean = (text) => KOREAN_REGEX.test(text);
 
 // 변환 예외 패턴들을 설정으로 관리
 const CONVERSION_EXCEPTIONS = {
-    // 특정 속성명들 (React Intl 관련만 제외)
-    EXCLUDED_PROPERTY_NAMES: ['defaultMessage', 'id'],
+    // 특정 속성명들 (React Intl 관련 및 스타일 속성 제외)
+    EXCLUDED_PROPERTY_NAMES: ['defaultMessage', 'id', 'fontFamily', 'className', 'style'],
     // JSX 속성 중 변환할 속성들 (화이트리스트)
     INCLUDED_JSX_ATTRIBUTES: ['label', 'placeholder', 'title', 'alt', 'aria-label'],
     // 특정 패턴들
@@ -34,6 +34,7 @@ const CONVERSION_EXCEPTIONS = {
         /^\d+(\.\d+)?$/, // 숫자만
         /^#[a-fA-F0-9]{3,6}$/, // 색상코드
         /^[^\w가-힣]+$/, // 특수문자만 (한국어, 영문, 숫자가 아닌 문자들만)
+        /^.*(고딕|명조|돋움|바탕|Arial|Times|Helvetica|sans-serif|serif|monospace).*$/i, // 글꼴 이름 패턴
     ]
 };
 
