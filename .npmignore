@@ -1,12 +1,36 @@
 # Node modules
 **/node_modules/
 
-# Unnecessary folders
-components/
-messages/
-
-# test
+# 테스트 파일
+test-*/
 test.js
+
+# 임시 메시지 파일
+newMessages*.json
+
+# 개발 설정 파일
+.claude/
+CLAUDE.md
+.prettierrc
+
+# Git 관련
+.git/
+.gitignore
+
+# 개발 도구
+npm-debug.log*
+*.log
 
 # IDE or Editor files
 .idea/
+.vscode/
+*.swp
+*.swo
+
+# OS 생성 파일
+.DS_Store
+Thumbs.db
+
+# 기타 불필요한 파일
+coverage/
+.nyc_output/

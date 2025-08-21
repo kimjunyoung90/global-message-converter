@@ -3,7 +3,7 @@
 
 **한국어만 변환됩니다.**  
 
-**[변경사항](./CHANGELOG.md)**: 최신 업데이트 내역을 여기서 확인하세요.
+**[변경사항](https://github.com/kimjunyoung90/global-message-converter/blob/main/CHANGELOG.md)**: 최신 업데이트 내역을 여기서 확인하세요.
 
 #### 변환 예시 (클래스형 및 함수형 컴포넌트 지원)
 1. JSX 내 텍스트 변환
