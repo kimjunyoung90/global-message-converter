@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.14.0](https://github.com/kimjunyoung90/global-message-converter/compare/v1.13.4...v1.14.0) (2025-08-21)
+
+
+### Features
+
+* 비동기 파일 I/O 및 에러 핸들링 개선 ([b7b7658](https://github.com/kimjunyoung90/global-message-converter/commit/b7b76584ed3b82a0b70a56abf10c7ab3d0230405))
+
 ### [1.13.4](https://github.com/kimjunyoung90/global-message-converter/compare/v1.13.3...v1.13.4) (2025-08-21)
 
 ### [1.13.3](https://github.com/kimjunyoung90/global-message-converter/compare/v1.13.2...v1.13.3) (2025-08-21)
