@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.11.0](https://github.com/kimjunyoung90/global-message-converter/compare/v1.10.0...v1.11.0) (2025-08-21)
+
+
+### Features
+
+* Babel Generator 코드 포맷팅 옵션 개선 ([a066c1e](https://github.com/kimjunyoung90/global-message-converter/commit/a066c1e0e6ea937eb33ffc90a650688ba313a63c))
+
 ## [1.10.0](https://github.com/kimjunyoung90/global-message-converter/compare/v1.9.0...v1.10.0) (2025-08-21)
 
 
