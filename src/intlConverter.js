@@ -19,6 +19,23 @@ import {
 const KOREAN_REGEX = /[가-힣]/;
 const isKorean = (text) => KOREAN_REGEX.test(text);
 
+// 변환 예외 패턴들을 설정으로 관리
+const CONVERSION_EXCEPTIONS = {
+    // 특정 속성명들
+    EXCLUDED_PROPERTY_NAMES: ['defaultMessage', 'id', 'className', 'style', 'src', 'href', 'alt', 'title'],
+    // 특정 JSX 속성들
+    EXCLUDED_JSX_ATTRIBUTES: true,
+    // 특정 패턴들
+    EXCLUDED_PATTERNS: [
+        /^\s*$/, // 공백만
+        /^[a-zA-Z0-9_-]+$/, // 영문+숫자+기호만
+        /^https?:\/\//, // URL
+        /^\/[a-zA-Z0-9/_-]*/, // 경로
+        /^\d+(\.\d+)?$/, // 숫자만
+        /^#[a-fA-F0-9]{3,6}$/, // 색상코드
+    ]
+};
+
 function getOrCreateMessageKey(text, globalMessages, newMessages) {
     let messageKey = Object.keys(globalMessages).find((key) => globalMessages[key] === text);
     if(!messageKey) {
@@ -30,20 +47,36 @@ function getOrCreateMessageKey(text, globalMessages, newMessages) {
     return messageKey;
 }
 
+function shouldSkipConversion(text, path) {
+    // 1. 공백 체크
+    if(!text) return true;
+
+    // 2. 한국어 아닌 경우
+    if(!isKorean(text)) return true;
+
+    // 3. 예외 패턴 체크
+    for (const pattern of CONVERSION_EXCEPTIONS.EXCLUDED_PATTERNS) {
+        if (pattern.test(text)) return true;
+    }
+
+    // 4. 특정 속성명 체크
+    const propertyName = path.parent?.key?.name || path.parent?.name?.name;
+    if (propertyName && CONVERSION_EXCEPTIONS.EXCLUDED_PROPERTY_NAMES.includes(propertyName)) {
+        return true;
+    }
+
+    // 5. JSX 속성 값 체크
+    if (CONVERSION_EXCEPTIONS.EXCLUDED_JSX_ATTRIBUTES && t.isJSXAttribute(path.container)) {
+        return true;
+    }
+
+    return false;
+}
+
 function convertStringLiteral(isFunctionComponent, path, globalMessages, newMessages) {
     const text = path.node.value.trim();
 
-    //1. 변환 예외
-    //공백
-    if(!text) return false;
-
-    //한국어 아닌 경우
-    if(!isKorean(text)) return false;
-    //defaultMessage 속성
-    if(path.parent?.key?.name === 'defaultMessage') return false;
-    if(path.parent?.name?.name === 'defaultMessage') return false;
-    //JSX 속성 값
-    if(t.isJSXAttribute(path.container)) return false;
+    if (shouldSkipConversion(text, path)) return false;
 
     //2. 메시지 탐색 및 생성
     const messageKey = getOrCreateMessageKey(text, globalMessages, newMessages);
@@ -60,6 +93,7 @@ function convertTemplateLiteral (isFunctionComponent, path, globalMessages, newM
     const params = {};
     const quasis = path.node.quasis;
     const expressions = path.node.expressions;
+    const usedParamKeys = new Set();
 
     let text = '';
     if (expressions.length === 0) {
@@ -77,14 +111,35 @@ function convertTemplateLiteral (isFunctionComponent, path, globalMessages, newM
             } else if (t.isCallExpression(expression)) {
                 if (t.isIdentifier(expression.callee)) {
                     paramKey = expression.callee.name;
-                } else {
+                } else if (t.isMemberExpression(expression.callee)) {
                     paramKey = expression.callee.property.name;
                 }
             }
 
             if(!_.isEmpty(paramKey)) {
-                text += `{${paramKey}}`;
-                params[paramKey] = expression;
+                // 중복 변수명 처리
+                let uniqueParamKey = paramKey;
+                let counter = 1;
+                while (usedParamKeys.has(uniqueParamKey)) {
+                    uniqueParamKey = `${paramKey}${counter}`;
+                    counter++;
+                }
+                usedParamKeys.add(uniqueParamKey);
+                
+                text += `{${uniqueParamKey}}`;
+                params[uniqueParamKey] = expression;
+            } else {
+                // 변수명을 추출할 수 없는 경우 param{index} 사용
+                let counter = 1;
+                let fallbackKey = `param${index}`;
+                while (usedParamKeys.has(fallbackKey)) {
+                    fallbackKey = `param${index}_${counter}`;
+                    counter++;
+                }
+                usedParamKeys.add(fallbackKey);
+                
+                text += `{${fallbackKey}}`;
+                params[fallbackKey] = expression;
             }
         });
 
@@ -92,9 +147,9 @@ function convertTemplateLiteral (isFunctionComponent, path, globalMessages, newM
         text += quasis[quasis.length - 1].value.cooked;
     }
 
-    if(!text) return false;
-
-    if(isQueryString(text)) return false;
+    if (shouldSkipConversion(text, path) || isQueryString(text)) {
+        return false;
+    }
 
     const messageKey = getOrCreateMessageKey(text, globalMessages, newMessages);
 
@@ -328,6 +383,20 @@ function convert(componentPath, globalMessages, newMessages) {
     }
 }
 
+// 지원하는 파일 확장자 목록
+const SUPPORTED_EXTENSIONS = ['.js', '.jsx', '.ts', '.tsx'];
+
+function isValidFile(filePath) {
+    const ext = path.extname(filePath);
+    return SUPPORTED_EXTENSIONS.includes(ext);
+}
+
+function shouldSkipDirectory(dirName) {
+    // 숨김 디렉토리 및 특정 디렉토리 제외
+    const excludedDirs = ['node_modules', '.git', '.next', 'dist', 'build', 'coverage', '.nyc_output'];
+    return dirName.startsWith('.') || excludedDirs.includes(dirName);
+}
+
 function searchPathAndConvert(inputPath, globalMessages, newMessages) {
 
     if (!fs.existsSync(inputPath)) {
@@ -337,11 +406,21 @@ function searchPathAndConvert(inputPath, globalMessages, newMessages) {
 
     const stats = fs.statSync(inputPath);
     if (stats.isFile()) {
-        convert(inputPath, globalMessages, newMessages);
+        if (isValidFile(inputPath)) {
+            convert(inputPath, globalMessages, newMessages);
+        } else {
+            console.log(`지원하지 않는 파일 형식: ${inputPath}`);
+        }
     } else if (stats.isDirectory()) {
+        const dirName = path.basename(inputPath);
+        if (shouldSkipDirectory(dirName)) {
+            console.log(`디렉토리 건너뜀: ${inputPath}`);
+            return;
+        }
+
         const files = fs.readdirSync(inputPath);
         files.forEach(file => {
-            const fullPath = path.join(inputPath, file)
+            const fullPath = path.join(inputPath, file);
             searchPathAndConvert(fullPath, globalMessages, newMessages);
         });
     } else {
