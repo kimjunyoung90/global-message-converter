@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.15.0](https://github.com/kimjunyoung90/global-message-converter/compare/v1.14.0...v1.15.0) (2025-08-21)
+
+
+### Features
+
+* 로깅 시스템, 설정 파일 지원 및 고급 CLI 옵션 추가 ([83e3a64](https://github.com/kimjunyoung90/global-message-converter/commit/83e3a6499879a7d8526419a0a618d4912e20d01a))
+
 ## [1.14.0](https://github.com/kimjunyoung90/global-message-converter/compare/v1.13.4...v1.14.0) (2025-08-21)
 
 
