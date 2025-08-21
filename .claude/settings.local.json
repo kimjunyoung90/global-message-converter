@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm link:*)",
+      "Bash(git add:*)",
+      "Bash(node:*)",
+      "Bash(npm install)",
+      "Bash(git push:*)",
+      "Bash(npm run release:*)",
+      "Bash(npm publish:*)",
+      "Bash(touch:*)",
+      "Bash(npm pack:*)",
+      "Bash(git commit:*)",
+      "Bash(npm view:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(rm:*)",
+      "Bash(git reset:*)",
+      "Bash(npm audit:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

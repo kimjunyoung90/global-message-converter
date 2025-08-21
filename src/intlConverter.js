@@ -2,7 +2,8 @@ import parser from '@babel/parser';
 import traverse from '@babel/traverse';
 import generate from '@babel/generator';
 import t from '@babel/types';
-import fs from 'fs';
+import fs from 'fs/promises';
+import { existsSync, statSync, readdirSync } from 'fs';
 import path from 'path';
 import { createNewMessageFile, loadMessages } from './messageUtils.js';
 import {
@@ -254,8 +255,9 @@ function isFunctionComponent (node) {
 
 }
 
-function convert(componentPath, globalMessages, newMessages) {
-    const code = fs.readFileSync(componentPath, 'utf8');
+async function convert(componentPath, globalMessages, newMessages) {
+    try {
+        const code = await fs.readFile(componentPath, 'utf8');
 
     let isFormattedMessageImportNeed = false;
     let isInjectIntlImportNeed = false;
@@ -406,15 +408,14 @@ function convert(componentPath, globalMessages, newMessages) {
         },
     });
 
-    //다국어 메시지 적용 파일 생성
-    if (result) {
-        fs.writeFile(componentPath, result, 'utf8', (err) => {
-            if(err) {
-                console.error(err);
-                return;
-            }
+        //다국어 메시지 적용 파일 생성
+        if (result) {
+            await fs.writeFile(componentPath, result, 'utf8');
             console.log(`${componentPath} 변환`);
-        });
+        }
+    } catch (error) {
+        console.error(`파일 처리 오류: ${componentPath} - ${error.message}`);
+        throw error;
     }
 }
 
@@ -432,52 +433,66 @@ function shouldSkipDirectory(dirName) {
     return dirName.startsWith('.') || excludedDirs.includes(dirName);
 }
 
-function searchPathAndConvert(inputPath, globalMessages, newMessages) {
-
-    if (!fs.existsSync(inputPath)) {
-        console.error(`${inputPath} 파일(폴더)를 찾을 수 없습니다.`);
-        return;
-    }
-
-    const stats = fs.statSync(inputPath);
-    if (stats.isFile()) {
-        if (isValidFile(inputPath)) {
-            convert(inputPath, globalMessages, newMessages);
-        } else {
-            console.log(`지원하지 않는 파일 형식: ${inputPath}`);
-        }
-    } else if (stats.isDirectory()) {
-        const dirName = path.basename(inputPath);
-        if (shouldSkipDirectory(dirName)) {
-            console.log(`디렉토리 건너뜀: ${inputPath}`);
+async function searchPathAndConvert(inputPath, globalMessages, newMessages) {
+    try {
+        if (!existsSync(inputPath)) {
+            console.error(`${inputPath} 파일(폴더)를 찾을 수 없습니다.`);
             return;
         }
 
-        const files = fs.readdirSync(inputPath);
-        files.forEach(file => {
-            const fullPath = path.join(inputPath, file);
-            searchPathAndConvert(fullPath, globalMessages, newMessages);
-        });
-    } else {
-        console.error(`${inputPath} 파일 및 폴더가 아닙니다.`);
+        const stats = statSync(inputPath);
+        if (stats.isFile()) {
+            if (isValidFile(inputPath)) {
+                await convert(inputPath, globalMessages, newMessages);
+            } else {
+                console.log(`지원하지 않는 파일 형식: ${inputPath}`);
+            }
+        } else if (stats.isDirectory()) {
+            const dirName = path.basename(inputPath);
+            if (shouldSkipDirectory(dirName)) {
+                console.log(`디렉토리 건너뜀: ${inputPath}`);
+                return;
+            }
+
+            const files = readdirSync(inputPath);
+            // 병렬 처리를 위해 Promise.all 사용
+            await Promise.all(files.map(async file => {
+                const fullPath = path.join(inputPath, file);
+                await searchPathAndConvert(fullPath, globalMessages, newMessages);
+            }));
+        } else {
+            console.error(`${inputPath} 파일 및 폴더가 아닙니다.`);
+        }
+    } catch (error) {
+        console.error(`경로 처리 오류: ${inputPath} - ${error.message}`);
+        throw error;
     }
 }
 
-function intlConverter(inputPath, messageFilePath) {
-    if (!fs.existsSync(messageFilePath)) {
-        console.error(`${messageFilePath} 메시지 파일을 찾을 수 없습니다.`);
-        return;
-    }
-    //메시지 파일 로드
-    const globalMessages = loadMessages(messageFilePath);
-    const newMessages = {};
+async function intlConverter(inputPath, messageFilePath) {
+    try {
+        if (!existsSync(messageFilePath)) {
+            console.error(`${messageFilePath} 메시지 파일을 찾을 수 없습니다.`);
+            return;
+        }
+        
+        //메시지 파일 로드
+        const globalMessages = await loadMessages(messageFilePath);
+        const newMessages = {};
 
-    //변환
-    searchPathAndConvert(inputPath, globalMessages, newMessages);
+        //변환
+        await searchPathAndConvert(inputPath, globalMessages, newMessages);
 
-    //변환된 컴포넌트 생성
-    if(Object.keys(newMessages).length > 0) {
-        createNewMessageFile(newMessages);
+        //변환된 컴포넌트 생성
+        if(Object.keys(newMessages).length > 0) {
+            const newMessageFile = await createNewMessageFile(newMessages);
+            console.log(`변환 완료! 새 메시지: ${Object.keys(newMessages).length}개`);
+        } else {
+            console.log('변환할 새로운 메시지가 없습니다.');
+        }
+    } catch (error) {
+        console.error(`변환 프로세스 오류: ${error.message}`);
+        process.exit(1);
     }
 }
 
