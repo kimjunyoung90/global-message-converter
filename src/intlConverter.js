@@ -22,9 +22,9 @@ const isKorean = (text) => KOREAN_REGEX.test(text);
 // 변환 예외 패턴들을 설정으로 관리
 const CONVERSION_EXCEPTIONS = {
     // 특정 속성명들
-    EXCLUDED_PROPERTY_NAMES: ['defaultMessage', 'id', 'className', 'style', 'src', 'href', 'alt', 'title', 'aria-label', 'placeholder', 'type', 'name', 'value'],
+    EXCLUDED_PROPERTY_NAMES: ['defaultMessage', 'id', 'className', 'style', 'src', 'href', 'alt', 'title', 'aria-label', 'type', 'name', 'value'],
     // JSX 속성 중 변환할 속성들 (화이트리스트)
-    INCLUDED_JSX_ATTRIBUTES: ['label'],
+    INCLUDED_JSX_ATTRIBUTES: ['label', 'placeholder'],
     // 특정 패턴들
     EXCLUDED_PATTERNS: [
         /^\s*$/, // 공백만
@@ -33,6 +33,7 @@ const CONVERSION_EXCEPTIONS = {
         /^\/[a-zA-Z0-9/_-]*/, // 경로
         /^\d+(\.\d+)?$/, // 숫자만
         /^#[a-fA-F0-9]{3,6}$/, // 색상코드
+        /^[^\w가-힣]+$/, // 특수문자만 (한국어, 영문, 숫자가 아닌 문자들만)
     ]
 };
 
@@ -166,9 +167,8 @@ function convertTemplateLiteral (isFunctionComponent, path, globalMessages, newM
 function convertJSXText(path, globalMessages, newMessages) {
     const text = path.node.value.trim();
 
-    //1. 변환 예외
-    //공백
-    if(!text) return false;
+    //1. 변환 예외 - shouldSkipConversion 함수 사용
+    if (shouldSkipConversion(text, path)) return false;
 
     //2. 메시지 탐색 및 변환
     const messageKey = getOrCreateMessageKey(text, globalMessages, newMessages);
