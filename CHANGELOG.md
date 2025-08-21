@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.8.1](https://github.com/kimjunyoung90/global-message-converter/compare/v1.8.0...v1.8.1) (2025-08-21)
+
+
+### Bug Fixes
+
+* README.md CHANGELOG 링크를 GitHub 절대 URL로 수정 ([7dc6e08](https://github.com/kimjunyoung90/global-message-converter/commit/7dc6e08d15f478740062fb62c821b43ca7352b5f))
+
 ## 1.8.0 (2025-08-21)
 
 
